@@ -49,7 +49,7 @@ If you read all five projects back-to-back, a common shape comes into focus. A m
 The pieces are remarkably consistent. The disagreements are about:
 
 - Whether the loop runs in a binary or behind an HTTP server.
-- Whether the model is one vendor's or any of twenty.
+- Whether the model is one vendor's or any of two dozen.
 - Whether tools live in the agent process, in containers, or behind a sandbox runtime.
 - Whether the user is approving every shell call or has accepted a sandbox in lieu.
 - Whether the agent learns persistently or starts fresh every session.
@@ -84,7 +84,7 @@ The model is the active sequencer. The runtime is what makes its choices safe an
 
 Context pressure is not an error to be handled — it is a normal phase of every turn. All five projects fold compaction into the loop body:
 
-- claude-code stages five tiers (`tool-result budget → snip → microcompact → context-collapse → autocompact`) before every model call.
+- claude-code stages five tiers (`tool-result budget → snip → microcompact → context-collapse → autocompact`) before every model call. Several stages are feature-gated dynamic requires; the call sites are in `query.ts` but the implementation modules ship behind flags.
 - opencode and openclaw queue a `compaction` agent on overflow, run a hidden compaction turn, and continue.
 - hermes-agent enforces prefix-cache discipline as an architectural rule: *"the ONLY time we alter context is during context compression."*
 - pi-mono offers `/compact` plus auto-compaction, with `session_before_compact` for extensions.
@@ -126,7 +126,7 @@ The [Agent Client Protocol](https://agentclientprotocol.com/) (originally Zed's 
 
 - opencode: `opencode acp` as a stdio-NDJSON JSON-RPC server, full SDK integration.
 - pi-mono: community `pi-acp` extension.
-- hermes-agent: `acp_adapter/server.py` that persists ACP sessions to the same `~/.hermes/state.db` as native sessions.
+- hermes-agent: `acp_adapter/server.py` that persists ACP sessions to the same `~/.hermes/state.db` as native sessions. A sibling `acp_registry/` directory ships `agent.json` + `icon.svg` for editor-side discovery — ACP has metadata conventions on top of the protocol wire.
 - openclaw: `openclaw acp` server *and* an `acpx` extension that lets openclaw drive Codex / Claude Code / Gemini CLI / OpenCode / Pi as nested ACP children.
 
 This level of cross-vendor adoption with no central coordination is unusual. ACP appears to be filling a gap MCP intentionally does not address (per-turn agent control rather than per-call tool exposure).
@@ -257,7 +257,9 @@ Prefix-cache-stable design is now load-bearing for cost control. Designs that re
 
 The mature loops treat the error cases — prompt-too-long, max-output-tokens, model fallback, interruption, stop-hook blocking — as normal `continue` paths with explicit anti-spiral guards. claude-code's `transition` field on its loop's `State` struct records *why* the previous iteration continued; the next iteration uses that to decide whether to retry, escalate, or surface. opencode wraps the entire turn in `Effect.retry(SessionRetry.policy(...))` with `Retry-After` header awareness and exponential backoff.
 
-Designs that surface 413s as exceptions to the user are obsolete. Compaction-on-413 + retry is the bar.
+A second, qualitatively different recovery axis hides in opencode's `experimental_repairToolCall`: when the model calls a tool with the wrong case, the call is rewritten (`Read` → `read`); when the model calls a tool that genuinely doesn't exist, the call is routed to a sink `invalid` tool whose parse-error becomes the tool result. The model doesn't need to retry the API at all — it just sees a different tool result on the next iteration and self-corrects. Bad tool calls flow through the tool channel, not the exception channel.
+
+Designs that surface 413s as exceptions to the user are obsolete. Compaction-on-413 + retry is the bar for the API-call axis; tool-result-as-error is the emerging bar for the model-error axis. The two compose: a robust loop should do both.
 
 ### "One operator" as a security frame
 
@@ -278,7 +280,7 @@ If you're starting from scratch in mid-2026, the table stakes are roughly:
 5. **A compaction stage that runs before every model call**, with at least: tool-result budgeting + summary-on-overflow + a way for the model to recover from a real 413.
 6. **A permission system that's pattern-rule-based** if you go that route (claude-code, opencode), or a sandbox/container story if you go the other way (openclaw, hermes).
 7. **MCP support** unless you're explicitly refusing it (pi, openclaw-core).
-8. **An ACP server** for IDE integration — this is the new table-stake for editor users.
+8. **An ACP server** for IDE integration — this is the new table-stake for editor users. The strong form is what hermes-agent and openclaw do: ACP sessions persist to the **same** store as native sessions, so the editor sees the same conversation the CLI does instead of a forked-context process. Anything weaker is a wrapper, not an integration.
 9. **A session store** that's durable (event-sourced is a plus, JSONL trees are fine) so users can fork/rewind/replay/share.
 10. **Subagent capability** via a `task` tool — even if you only ship one type (`general`), the affordance matters.
 

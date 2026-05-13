@@ -89,7 +89,7 @@ This is consistent across the field. The runtime exists to make the model's choi
 All five stream model tokens. Three (claude-code, opencode, openclaw) additionally execute concurrency-safe tools while the model is still emitting tokens:
 
 - claude-code: `StreamingToolExecutor` (`services/tools/StreamingToolExecutor.ts`) overlaps tool runs with stream.
-- opencode: per-turn `SessionProcessor` processes `tool-input-delta`/`tool-call` AI-SDK events live.
+- opencode: per-turn `SessionProcessor` processes `tool-input-delta`/`tool-call` AI-SDK events live. Bad calls don't break the stream — `experimental_repairToolCall` rewrites mis-cased tool names (`Read` → `read`), and any genuinely-unknown call gets routed to a sink `invalid` tool whose error becomes a tool result the model can read and self-correct from. Wrong tool calls flow through the tool channel, not the exception channel.
 - openclaw: pi-mono's `executeToolCallsParallel` with sequential safety fallback.
 
 pi-mono natively supports parallel tool execution; openclaw inherits it. hermes-agent's loop is synchronous over OpenAI chat-completions; tool calls within one assistant turn run sequentially in the handler thread.
@@ -98,7 +98,7 @@ pi-mono natively supports parallel tool execution; openclaw inherits it. hermes-
 
 Every one of the five treats context pressure as a routine event, not an error.
 
-- claude-code stages five tiers (tool-result budget → snip → microcompact → context-collapse → autocompact) *before every model call*, plus reactive paths for real 413s.
+- claude-code stages five tiers (tool-result budget → snip → microcompact → context-collapse → autocompact) *before every model call*, plus reactive paths for real 413s. The pipeline is wired in `query.ts` but several stages (`snipCompact`, `contextCollapse`, `reactiveCompact`) are feature-gated dynamic requires — the implementation files aren't shipped in this external snapshot, only the call sites.
 - opencode runs a hidden `compaction` agent on overflow with `experimental.session.compacting` plugin override.
 - hermes-agent has `agent/context_compressor.py` with `on_pre_compress` hooks for memory providers; **prefix-cache discipline is a hard rule** ("the ONLY time we alter context is during context compression").
 - openclaw inherits pi-mono compaction and adds plugin hooks `before_compaction`/`after_compaction`.
@@ -142,7 +142,7 @@ hermes-agent splits the difference: per-tool approval callbacks (`make_approval_
 - **Wrap an existing matrix** — opencode delegates to `@ai-sdk/*` (23 bundled adapters lazy-loaded on demand); openclaw delegates to pi-ai through its pi-mono embedding (~25 providers across 9 wire APIs). One wrapper, broad provider coverage.
 - **Build your own** — claude-code (Anthropic-native streaming), hermes-agent (OpenAI-format with native parsers), pi-ai (9 wire APIs hand-implemented).
 
-opencode goes further: it ingests the model catalog **live from `https://models.dev`** with a 60-minute refresh, so new models appear without code changes. This is unique among the five.
+opencode goes further: it ingests the model catalog **live from `https://models.dev`** with a two-timer refresh — a 5-minute disk-mtime check on every read plus a 60-minute background fiber that re-runs the refresh. So new models appear without code changes, but turn-1 cost is bounded. This is unique among the five.
 
 ### Server-as-default vs binary-as-default
 
@@ -191,7 +191,12 @@ hermes-agent is the only one where the agent edits its own skills (curator can `
 
 ### Auto-recovery as control flow
 
-claude-code's loop is the most explicit about treating prompt-too-long, max-output-tokens, model fallback, and stop-hook continuation as `continue` paths with anti-spiral guards. opencode does this with retry policies (`SessionRetry.policy` with `Retry-After` header support, exponential backoff). hermes-agent and openclaw inherit pi-mono's loop, which is simpler — aborts and provider errors bubble up as a final assistant message with `stopReason: "aborted" | "error"` and the higher layer decides whether to retry. Recovery-as-control-flow is most refined in claude-code.
+Two complementary recovery axes show up across the five:
+
+- **Retry the API call** — claude-code's loop is the most explicit about treating prompt-too-long, max-output-tokens, model fallback, and stop-hook continuation as `continue` paths with anti-spiral guards. opencode does this with retry policies (`SessionRetry.policy` with `Retry-After` header support, exponential backoff). hermes-agent and openclaw inherit pi-mono's loop, which is simpler — aborts and provider errors bubble up as a final assistant message with `stopReason: "aborted" | "error"` and the higher layer decides whether to retry.
+- **Let the model self-correct through tool results** — opencode is most explicit here: `experimental_repairToolCall` rewrites case-mismatched tool names, and any unrecoverable tool-call problem is routed to a sink `invalid` tool whose error message comes back as a tool result the model can read. The model doesn't need to retry the API; it just gets a different tool result on the next iteration.
+
+Recovery-as-control-flow is most refined in claude-code along the first axis, and in opencode along the second. The two patterns compose: a runtime that does both has both transparent retries *and* a recoverable error surface inside the loop.
 
 ### Trust boundaries
 
@@ -211,6 +216,7 @@ pi-mono and opencode have fewer first-class defenses, deferring to the user's co
 - **pi-skills targets five agents.** badlogic's pi-skills repo ships identical content with install instructions for `~/.pi/agent/skills/pi-skills`, `~/.codex/skills/pi-skills`, `~/.config/amp/tools/pi-skills`, `~/.factory/skills/pi-skills`, and (with symlink workarounds) `~/.claude/skills/<skill>`. The `SKILL.md` is the unifying artifact.
 - **openclaw uses ACP twice.** `openclaw acp` is a stdio-NDJSON ACP server for IDEs. `extensions/acpx` is an ACP *client* registry that lets openclaw embed Codex / Claude Code / Gemini CLI / OpenCode / Pi as nested ACP harnesses. So openclaw can be driven by Zed, and openclaw can drive other coding agents.
 - **All non-claude agents speak ACP.** opencode (`packages/opencode/src/acp/`), pi (community `pi-acp` extension), hermes (`acp_adapter/server.py`), openclaw (`src/acp/server.ts`). Each maps ACP sessions to its own session store.
+- **`mcporter` is shipped as a skill, not an extension.** This is small but illustrative: openclaw's "no MCP in core" stance works because the skill abstraction is rich enough to host a whole MCP bridge as a Markdown-plus-binary bundle. The trust boundary stays where openclaw wants it (skills are untrusted instructions the agent reads; extensions are trusted in-process code) — and MCP server churn never touches the gateway code.
 
 ## Where the field is converging
 
