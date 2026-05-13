@@ -1,7 +1,7 @@
 # Slide outline — Modern AI Agents
 
 > **Audience:** minimal AI background. They've heard of ChatGPT; they have not heard of CoT, ReAct, MCP, ACP, or RAG.
-> **Format:** Marp deck, ~22 slides for a 30-40 minute talk.
+> **Format:** Marp deck, 23 slides for a 30-40 minute talk.
 > **Slide-craft rule:** one big diagram per slide; text is title + tagline + ≤ 3 short bullets. Mermaid for sequence/flow/timeline; HTML/CSS for grids and callouts. No code blocks.
 > **Visual language:** the *agent loop* (model + tools + observation) is the recurring spine; use the same color/shape conventions across every slide that shows it.
 
@@ -22,8 +22,8 @@
 - **Visual:** horizontal timeline as a single Mermaid `graph LR`.
   - Nodes: `Transformer (2017)` → `ChatGPT (2022)` → `Tools (2023)` → `Reasoning (2024)` → `Today's agents (2026)`.
   - One small icon per node.
-- **Text:** title only — *"Six years, six inflection points."*
-- **Speaker notes:** the whole talk is unpacking this one line.
+- **Text:** title only — *"From a paper to a product category."*
+- **Speaker notes:** the whole talk is unpacking this one line. 5 inflection points; ~9 years.
 
 ### Slide 3: Thesis preview
 
@@ -72,15 +72,14 @@
 ### Slide 6: The model learned to "think"
 
 - **Visual:** Mermaid `graph LR` showing the prompt-trick → trained-capability progression.
-  - Node A: *"Let's think step by step"* (Kojima 2022, simple textual prompt)
-  - Node B: *Chain-of-Thought reasoning* (Wei 2022, exemplars)
-  - Node C: *Trained reasoning models* (o1, R1, Claude extended thinking)
-  - Arrows labeled with year.
+  - Node A: *Worked-example reasoning prompts* (Wei, Jan 2022 — Chain-of-Thought)
+  - Node B: *"Let's think step by step"* (Kojima, May 2022 — zero-shot CoT)
+  - Node C: *Trained reasoning models* (o1 Sep 2024, R1 Jan 2025, Claude extended thinking Feb 2025)
 - **Text:**
   - Title: *Reasoning became a separate output channel*
   - Callout: *Final answer + (optionally visible) thinking trace*
 - **Source:** draft 03.
-- **Speaker notes:** show that reasoning is *not* magic — it started as a prompt trick, then got baked into the model.
+- **Speaker notes:** show that reasoning is *not* magic — it started as a prompt trick (Wei showed worked examples worked; Kojima showed even a zero-shot phrase worked), then got baked into the model via RL.
 
 ### Slide 7: The model learned to "act" — tools
 
@@ -118,11 +117,11 @@
 - **Visual:** a timeline strip (HTML/CSS or Mermaid).
   - Oct 2022: LangChain
   - Nov 2022: ChatGPT
-  - Mar 2023: AutoGPT (100K stars in a month)
-  - Apr 2023: BabyAGI
+  - Mar 30, 2023: AutoGPT (30K stars in 13 days; 100K by late April)
+  - Apr 3, 2023: BabyAGI
   - Aug 2023: AutoGen, MetaGPT
   - Jan 2024: CrewAI
-  - Nov 2024: MCP
+  - Nov 25, 2024: MCP
 - **Text:**
   - Title: *The orchestration framework wave*
   - Callout: *Agents went from research diagram to product category in 6 months*
@@ -165,17 +164,17 @@
 
 ### Slide 12: The 2024–2025 standards
 
-- **Visual:** layered stack (HTML/CSS columns).
-  - 4 boxes left-to-right:
-    - `MCP` *— tool bridge* (Anthropic, Nov 2024)
-    - `ACP` *— editor bridge* (Zed, Aug 2025)
-    - `SKILL.md` *— capability artifact* (Oct 2025)
-    - `AGENTS.md` *— project context* (Apr 2025)
+- **Visual:** layered stack (HTML/CSS columns), ordered chronologically left-to-right.
+  - 4 boxes:
+    - `MCP` *— tool bridge* (Anthropic, Nov 25, 2024)
+    - `AGENTS.md` *— project context* (OpenAI Codex CLI, mid-2025)
+    - `ACP` *— editor bridge* (Zed, Aug 27, 2025)
+    - `SKILL.md` *— capability artifact* (Anthropic, Oct 16, 2025)
   - Each with a one-line tagline.
 - **Text:**
-  - Title: *Standards arrived. All of them.*
+  - Title: *Standards arrived — across vendors*
 - **Source:** draft 07.
-- **Speaker notes:** four cross-vendor standards in 18 months. Each minimal, composable, donated to the Linux Foundation (MCP, AGENTS.md).
+- **Speaker notes:** four cross-vendor standards in 12 months. Each minimal, composable. MCP and AGENTS.md were donated to the Linux Foundation's Agentic AI Foundation in late 2025; SKILL.md is stewarded by Anthropic via `agentskills.io`; ACP is stewarded by Zed.
 
 ### Slide 13: How they fit together
 
@@ -193,7 +192,7 @@
   - Title: *Three protocols, three boundaries*
   - Callout: *LSP for languages, ACP for editor↔agent, MCP for agent↔tools*
 - **Source:** draft 07.
-- **Speaker notes:** the LSP analogy is the unlock for the non-technical part of the audience — they may have heard the language-server idea.
+- **Speaker notes:** if the audience knows LSP (the IDE↔language-server protocol that powers code intelligence in VS Code/Vim/etc.), use the analogy directly: "ACP is to agents what LSP is to language servers." If they don't, just describe both surfaces: "the editor speaks one protocol to the agent for the conversation; the agent speaks another protocol to its tools."
 
 ### Slide 14: Skills as a portable artifact
 
@@ -201,12 +200,12 @@
   - Stage 1: *Discovery* — agent sees only `name + description`
   - Stage 2: *Activation* — agent reads `SKILL.md` body
   - Stage 3: *Execution* — body references scripts / templates
-  - Annotate cost: *"50 skills × 100 tokens = 5,000 tokens at startup"* vs *"50 skills × 2,000 tokens = 100,000 tokens"*.
+  - Annotate cost: *"30 skills × ~100 tokens ≈ 3K tokens at startup"* vs *"30 skills × ~2,000 tokens ≈ 60K tokens (eager load)"*.
 - **Text:**
   - Title: *Skills load on demand*
-  - Callout: *Same file works across Claude / Codex / Cursor / opencode / Pi / Goose*
+  - Callout: *Same file works across Claude Code / Codex / Cursor / OpenCode / Pi / Goose*
 - **Source:** draft 07.
-- **Speaker notes:** the skill file is plain Markdown with a small YAML header — and that minimalism is what made it portable.
+- **Speaker notes:** the skill file is plain Markdown with a small YAML header — and that minimalism is what made it portable. The cost-of-eager-loading number is from Anthropic's published numbers, scaled.
 
 ---
 
@@ -228,16 +227,16 @@
 
 ### Slide 16: How they relate
 
-- **Visual:** Mermaid graph showing surprising cross-references.
-  - `pi-mono` ← embedded by ← `openclaw`
-  - `openclaw` ← migrated from → `hermes-agent`
-  - `claude-code` skills format ← reused by ← `opencode`
-  - `pi-skills` → ships for → 5 agents
-  - `openclaw` ↔ ACP server + client (drives Codex/Claude/Gemini/Pi)
+- **Visual:** Mermaid graph showing surprising cross-references (use directional arrows so temporal/dependency flow is unambiguous).
+  - `pi-mono` —embedded by→ `openclaw` (openclaw imports `@mariozechner/pi-agent-core` + `@mariozechner/pi-coding-agent` + `@mariozechner/pi-ai`)
+  - `openclaw` —evolved into→ `hermes-agent` (hermes ships `hermes claw migrate` to import `~/.openclaw`)
+  - `claude-code` SKILL.md format —adopted by→ `opencode` (walks `~/.claude/skills/` directly)
+  - `pi-skills` —ships identical files for→ 5 agents (Pi / Codex / Amp / Droid / Claude Code)
+  - `openclaw` —drives via ACP→ `Codex / Claude Code / Gemini CLI / OpenCode / Pi` (bidirectional: openclaw is also an ACP *server* for IDEs)
 - **Text:**
   - Title: *The family tree*
   - Callout: *Standards are real. The ecosystem composes.*
-- **Source:** draft 08, draft 09 cross-references.
+- **Source:** draft 08, draft 09 cross-references. pi-skills count is 5 per `pi-skills/README.md`.
 
 ---
 
@@ -359,7 +358,7 @@ For implementation later, the diagrams to author:
 18. **Problem-class decision tree** (slide 21) — Mermaid `graph TD`.
 19. **10-item checklist** (slide 22) — HTML grid.
 
-19 diagrams across 23 slides. Average one diagram per slide; 4 slides are text-only (title, thesis, closing, plus one body).
+19 diagram *types* across 23 slides (the timeline strip is reused on slides 2 and 9, so 20 diagram instances). Three slides are text-only: 1 (title), 3 (thesis preview), 23 (closing). The remaining 20 slides each carry one diagram.
 
 ## Notes on style
 
