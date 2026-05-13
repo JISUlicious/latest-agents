@@ -19,7 +19,7 @@ Read each agent's own doc first for full evidence and citations. This file is th
 | **Runtime** | Node (Ink/React) | Bun (Effect) | Node | CPython | Node (≥22.12) |
 | **Process model** | single binary, REPL or headless | server + multiple clients (TUI, run, desktop, ACP, mobile) | single binary, 4 run modes | multi-process (CLI/TUI/gateway/ACP/dashboard/cron), one SQLite | one daemon ("Gateway") + many clients (CLI, web UI, macOS app, iOS/Android nodes) |
 | **Primary surface** | terminal REPL | terminal TUI (also web/desktop/mobile) | terminal TUI | terminal + chat platforms (Telegram/Discord/...) | chat platforms + macOS menu bar + CLI |
-| **Provider story** | Anthropic-first, fallback model | Vercel AI SDK + live `models.dev` catalog (~20 providers) | own `pi-ai` (~25 providers, 9 wire APIs) | OpenAI-format + 20 providers as plugins | inherits pi-mono's `pi-ai` |
+| **Provider story** | Anthropic-first, fallback model | Vercel AI SDK + live `models.dev` catalog (23 bundled providers) | own `pi-ai` (~25 providers, 9 wire APIs) | OpenAI-format + ~20 providers as plugins | inherits pi-mono's `pi-ai` |
 | **Tool count (built-in)** | ~40 (Bash, Read, Edit, Write, Glob, Grep, Task, MCP, …) | ~17 (shell, read, edit, write, glob, grep, task, fetch, search, …) | **7** (read/write/edit/bash + grep/find/ls) | 25+ (memory, session_search, terminal, delegate, kanban, …) | pi-mono's 7 + ~13 OpenClaw tools (browser, canvas, nodes, sessions_*, …) |
 | **MCP** | first-class, deferred, in-tree | first-class, stdio + HTTP + SSE + OAuth | refused; build extension if needed | first-class (Stdio/HTTP/SSE) | refused in core; use `mcporter` bridge |
 | **ACP** | not in tree | yes — `opencode acp` (Zed) | extension (`pi-acp`) | yes — `acp_adapter/server.py` | yes (server) + yes (client via `acpx`, embeds Codex/Claude/Gemini/Pi) |
@@ -120,7 +120,7 @@ The format is being treated as the de-facto open standard (see [agentskills.io](
 - pi-skills explicitly ships identical content for Pi, Claude Code, Codex CLI, Amp, and Droid.
 - opencode walks `~/.claude/skills/` directly.
 - hermes ships skills following the Anthropic format and pitches them as agentskills.io-compatible.
-- openclaw uses the same format and runs a registry (`clawhub.com`) for distribution.
+- openclaw uses the same format and runs a registry (`clawhub.ai`) for distribution.
 - claude-code uses a slightly different convention internally but is the spec's origin.
 
 This is one of the more striking findings of the comparison: the agent skill is rapidly becoming a portable, cross-vendor artifact.
@@ -139,7 +139,7 @@ hermes-agent splits the difference: per-tool approval callbacks (`make_approval_
 
 ### Provider abstraction: two paths
 
-- **Wrap the AI SDK** — opencode and openclaw both delegate the provider matrix to `@ai-sdk/*` (opencode) or to pi-ai (openclaw via pi-mono). Both get ~20 providers for the price of one wrapper.
+- **Wrap an existing matrix** — opencode delegates to `@ai-sdk/*` (23 bundled adapters lazy-loaded on demand); openclaw delegates to pi-ai through its pi-mono embedding (~25 providers across 9 wire APIs). One wrapper, broad provider coverage.
 - **Build your own** — claude-code (Anthropic-native streaming), hermes-agent (OpenAI-format with native parsers), pi-ai (9 wire APIs hand-implemented).
 
 opencode goes further: it ingests the model catalog **live from `https://models.dev`** with a 60-minute refresh, so new models appear without code changes. This is unique among the five.

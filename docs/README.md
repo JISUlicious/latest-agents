@@ -311,13 +311,13 @@ For the presentation, this is a reasonable read-through order:
 docs/
 ├── README.md                    ← this file (synthesis)
 ├── agents/
-│   ├── claude-code.md           ← 604 lines, evidence + citations
-│   ├── opencode.md              ← 665 lines
+│   ├── claude-code.md           ← 610 lines, evidence + citations
+│   ├── opencode.md              ← 678 lines
 │   ├── pi-mono.md               ← 463 lines
-│   ├── hermes-agent.md          ← 597 lines
-│   └── openclaw.md              ← 713 lines
+│   ├── hermes-agent.md          ← 603 lines
+│   └── openclaw.md              ← 716 lines
 └── comparison/
-    └── comparison.md            ← cross-cut, ~400 lines
+    └── comparison.md            ← cross-cut, ~250 lines
 ```
 
 Each per-agent doc is the primary source; this README and `comparison.md` are the cross-cut. When something here seems off, read the per-agent doc — the per-agent docs have file-path-and-line citations and verbatim quotes from the source.

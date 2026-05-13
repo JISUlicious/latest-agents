@@ -28,7 +28,7 @@ Dependencies flow: `pi-ai` → `pi-agent-core` → `pi-coding-agent`, with `pi-t
 
 ### CLI entry points and run modes
 
-The binary is registered as `"bin": { "pi": "dist/cli.js" }` in `packages/coding-agent/package.json:9`. `src/cli.ts` is a 20-line shim that imports `main` from `src/main.ts` and configures undici (the global HTTP dispatcher) to disable body and headers timeouts so long-stalling local LLMs don't get severed (`packages/coding-agent/src/cli.ts:17-20`).
+The binary is registered as `"bin": { "pi": "dist/cli.js" }` in `packages/coding-agent/package.json:9-11`. `src/cli.ts` is a 22-line shim that imports `main` from `src/main.ts` and configures undici (the global HTTP dispatcher) to disable body and headers timeouts so long-stalling local LLMs don't get severed (`packages/coding-agent/src/cli.ts:16-20`).
 
 `src/main.ts` is the actual entry point. It supports four modes selected by `parseArgs()`:
 
@@ -59,7 +59,7 @@ The loop has two layers:
 
 ### `agentLoop()` core
 
-Defined in `packages/agent/src/agent-loop.ts:31-93`. Returns an `EventStream<AgentEvent, AgentMessage[]>` that terminates on the `agent_end` event. The loop body is `runLoop()` (`agent-loop.ts:155-269`):
+The exported `agentLoop` is defined at `packages/agent/src/agent-loop.ts:31-54` (its sibling `agentLoopContinue` at lines 64-93). Both return an `EventStream<AgentEvent, AgentMessage[]>` that terminates on the `agent_end` event. The shared loop body is `runLoop()` (`agent-loop.ts:155-269`):
 
 ```ts
 // agent-loop.ts:174-254 (abridged)
@@ -155,14 +155,14 @@ Tools use TypeBox schemas exclusively. `validateToolArguments` (re-exported from
 
 Every built-in tool has a pluggable operations interface so the *transport* of the side-effect can be swapped:
 
-- `BashOperations` (`tools/bash.ts:39-57`) is `{ exec(cmd, cwd, opts) }`. The default implementation `createLocalBashOperations` spawns a shell via Node `child_process.spawn` (`tools/bash.ts:65-100`); SSH and sandbox extensions provide their own implementations. The user-bash event (`!cmd` / `!!cmd` editor prefix) is an event extensions can intercept to inject replacement operations - see `UserBashEventResult.operations` (`extensions/types.ts:990-996`).
+- `BashOperations` (`tools/bash.ts:39-57`) is `{ exec(cmd, cwd, opts) }`. The default implementation `createLocalBashOperations` spawns a shell via Node `child_process.spawn` (`tools/bash.ts:65-127`); SSH and sandbox extensions provide their own implementations. The user-bash event (`!cmd` / `!!cmd` editor prefix) is an event extensions can intercept to inject replacement operations - see `UserBashEventResult.operations` (`extensions/types.ts:990-996`).
 - `ReadOperations`, `WriteOperations`, `EditOperations`, `GrepOperations`, `FindOperations`, `LsOperations` follow the same pattern.
 
 This is the seam that `pi-ssh-remote` and sandbox extensions use to redirect every file/command operation to a remote host without forking pi internals.
 
 ### Tool definition shape
 
-`ToolDefinition` (extensions/types.ts:426-473`) is the shape every tool the LLM can call - whether built-in, registered via an extension, or registered via the SDK:
+`ToolDefinition` (`packages/coding-agent/src/core/extensions/types.ts:426-473`) is the shape every tool the LLM can call - whether built-in, registered via an extension, or registered via the SDK:
 
 ```ts
 interface ToolDefinition<TParams extends TSchema, TDetails, TState> {
@@ -200,7 +200,7 @@ Several community extensions implement layered permission systems (`pi-hooks/per
 
 ### CLI tool selection
 
-The user has three knobs (`packages/coding-agent/README.md:548-555`):
+The user has three knobs (`packages/coding-agent/README.md:547-555`):
 
 - `--tools <list>` / `-t <list>` - allowlist specific tools across built-in, extension, and custom
 - `--no-builtin-tools` / `-nbt` - disable built-ins but keep extension/custom
@@ -218,7 +218,7 @@ pi separates "what the model can read" (Skills) from "what the host can do" (Ext
 
 ### Skills - on-demand capability packages
 
-Skills are markdown files following the Agent Skills v1 spec (https://agentskills.io). Loader logic lives in `packages/coding-agent/src/core/skills.ts`. The minimum schema (`skills.ts:68-82`):
+Skills are markdown files following the Agent Skills v1 spec (https://agentskills.io). Loader logic lives in `packages/coding-agent/src/core/skills.ts`. The minimum schema (`skills.ts:75-82`):
 
 ```ts
 interface Skill {
@@ -231,7 +231,7 @@ interface Skill {
 }
 ```
 
-Discovery rules (`skills.ts:165-176`): if a directory contains a `SKILL.md`, that dir is the skill root and recursion stops. Otherwise, any loose `*.md` files in the root are loaded as skills, and subdirectories are recursed looking for nested `SKILL.md`s.
+Discovery rules (`skills.ts:165-176`, comment block): if a directory contains a `SKILL.md`, that dir is the skill root and recursion stops. Otherwise, any loose `*.md` files in the root are loaded as skills, and subdirectories are recursed looking for nested `SKILL.md`s.
 
 Default lookup roots (`skills.ts:447-453`):
 
@@ -254,13 +254,13 @@ When a skill file references a relative path, resolve it against the skill direc
 </available_skills>
 ```
 
-The `{baseDir}` placeholder convention used in `pi-skills` (see `pi-skills/README.md:99-101`) is a convention enforced by the *system prompt*, not by the loader - the prompt tells the model to substitute the file's directory whenever it sees a relative path.
+The `{baseDir}` placeholder convention used in `pi-skills` (see `pi-skills/README.md:98-101`) is a convention enforced by the *system prompt*, not by the loader - the prompt tells the model to substitute the file's directory whenever it sees a relative path.
 
-Skills can opt out of automatic invocation via `disable-model-invocation: true` in frontmatter (`skills.ts:69-72`); these can only be invoked explicitly via `/skill:name` commands.
+Skills can opt out of automatic invocation via `disable-model-invocation: true` in frontmatter (see `SkillFrontmatter` at `skills.ts:68-73`); these can only be invoked explicitly via `/skill:name` commands.
 
 ### Claude-Code/Codex/Amp interop
 
-The `SKILL.md` format is intentionally lifted from Claude Code so the same skill works in both ecosystems. `pi-skills/README.md` documents this explicitly: "compatible with Claude Code, Codex CLI, Amp, and Droid" (line 3) and provides identical-content install instructions for `~/.pi/agent/skills/pi-skills`, `~/.codex/skills/pi-skills`, `~/.config/amp/tools/pi-skills`, `~/.factory/skills/pi-skills`, and (with one wrinkle, since Claude Code only looks one directory deep) symlinked entries under `~/.claude/skills/<skill>` (`pi-skills/README.md:43-70`). pi additionally honours `~/.agents/skills/` and `.agents/skills/` paths (`packages/coding-agent/README.md:341`) so it can pick up skills laid out for a generic agent.
+The `SKILL.md` format is intentionally lifted from Claude Code so the same skill works in both ecosystems. `pi-skills/README.md` documents this explicitly: "compatible with Claude Code, Codex CLI, Amp, and Droid" (line 3) and provides install instructions for `~/.pi/agent/skills/pi-skills`, `~/.codex/skills/pi-skills`, `~/.config/amp/tools/pi-skills`, `~/.factory/skills/pi-skills`, and (with one wrinkle, since Claude Code only looks one directory deep) per-skill symlinks under `~/.claude/skills/<skill>` (`pi-skills/README.md:7-70`). pi additionally honours `~/.agents/skills/` and `.agents/skills/` paths (`packages/coding-agent/README.md:341`) so it can pick up skills laid out for a generic agent.
 
 ### Extensions - TypeScript modules that extend the host
 
@@ -292,7 +292,7 @@ The accompanying `ExtensionUIContext` (`types.ts:124-275`) is the host-side UI s
 
 `ExtensionCommandContext` (`types.ts:333-364`) extends the basic context with session-control methods that are only safe inside user-initiated commands: `waitForIdle`, `newSession`, `fork`, `navigateTree`, `switchSession`, `reload`.
 
-Extensions can also implement OAuth providers via `registerProvider({ oauth: { login, refreshToken, getApiKey } })` (`types.ts:1336-1347`), which is what `pi-synthetic` and corporate-SSO providers use.
+Extensions can also implement OAuth providers via `registerProvider({ oauth: { login, refreshToken, getApiKey } })` (`types.ts:1336-1347`); the docstring example calls it out for corporate-SSO setups, and community providers like `pi-synthetic` use `registerProvider` to add third-party model fleets.
 
 ### Hot reload
 
@@ -354,7 +354,7 @@ From the README (`packages/coding-agent/README.md:159-167`):
 
 ### Session model
 
-Sessions are JSONL files with one entry per line, organized as an in-place tree (each entry has `id` and `parentId`). This enables `/tree` for non-destructive branch navigation, `/fork` (new file, copy active path), `/clone` (duplicate active branch), and `--fork <id>` from the CLI. Session entries include `SessionMessageEntry`, `ModelChangeEntry`, `ThinkingLevelChangeEntry`, `CompactionEntry`, `BranchSummaryEntry`, `FileEntry`, and `CustomMessageEntry` (extensions can persist arbitrary state via `pi.appendEntry(customType, data)` - see `index.ts` re-exports at `src/index.ts:194-213`).
+Sessions are JSONL files with one entry per line, organized as an in-place tree (each entry has `id` and `parentId`). This enables `/tree` for non-destructive branch navigation, `/fork` (new file, copy active path), `/clone` (duplicate active branch), and `--fork <id>` from the CLI. Session entries include `SessionMessageEntry`, `ModelChangeEntry`, `ThinkingLevelChangeEntry`, `CompactionEntry`, `BranchSummaryEntry`, `FileEntry`, and `CustomMessageEntry` (extensions can persist arbitrary state via `pi.appendEntry(customType, data)` - see `index.ts` re-exports at `src/index.ts:191-213`).
 
 ### Compaction
 
@@ -370,7 +370,7 @@ Triggered manually with `/compact [prompt]` or automatically on context overflow
 - Each *Provider* selects one API plus a list of tool-capable models. As of the README the providers are: OpenAI, Azure, OpenAI Codex (ChatGPT subscription via OAuth), DeepSeek, Anthropic, Google, Vertex AI, Mistral, Groq, Cerebras, Cloudflare AI Gateway, Cloudflare Workers AI, xAI, OpenRouter, Vercel AI Gateway, MiniMax, Together AI, GitHub Copilot (OAuth), Amazon Bedrock, OpenCode Zen/Go, Fireworks (Anthropic-compatible), Kimi For Coding, Xiaomi MiMo (multi-region), and "any OpenAI-compatible API" via custom models (`packages/ai/README.md:51-77`).
 - Generated model metadata lives in `packages/ai/src/models.generated.ts`. `AGENTS.md:20` forbids hand-editing this file: it's regenerated from `scripts/generate-models.ts` which fetches from models.dev and provider sources.
 - `getModel(provider, id)` is fully typed; provider and model IDs are auto-completed in IDEs. Cross-provider handoffs are supported: messages from one provider can be passed verbatim to another, with thinking blocks downgraded to `<thinking>`-tagged text where the destination doesn't support reasoning (`packages/ai/README.md:976-1031`).
-- Built-in OAuth for Anthropic (Pro/Max), OpenAI Codex (ChatGPT Plus/Pro), GitHub Copilot, and Google Cloud Code Assist. CLI is `npx @earendil-works/pi-ai login` (`packages/ai/README.md:1200-1210`).
+- Built-in OAuth for Anthropic (Pro/Max), OpenAI Codex (ChatGPT Plus/Pro), GitHub Copilot, and Gemini CLI / Google Code Assist (`loginAnthropic`, `loginOpenAICodex`, `loginGitHubCopilot`, `loginGeminiCli` are the exported login functions). CLI is `npx @earendil-works/pi-ai login` (`packages/ai/README.md:1200-1210`).
 
 The unified streaming event model is the one `pi-agent-core` consumes: `start`, `text_*`, `thinking_*`, `toolcall_*`, `done`, `error` (`packages/ai/README.md:374-389`). `toolcall_delta` carries best-effort partial JSON parses so the TUI can show "Writing to: /tmp/x" before the full content arrives (`packages/ai/README.md:291-335`).
 
@@ -380,7 +380,7 @@ Custom providers/models are configured either statically in `~/.pi/agent/models.
 
 The `awesome-pi-agent` index categorizes 40+ community extensions; a few that document key host-side affordances:
 
-- **ACP / MCP adapters** - `pi-acp` exposes pi as an Agent Client Protocol server. There is no MCP adapter shipped, but `pi-config` (or any extension) can add one via `pi.registerTool` over an MCP client.
+- **ACP / MCP adapters** - `pi-acp` exposes pi as an Agent Client Protocol server. There is no first-party or community MCP adapter shipped in the index; the path the README suggests is to wrap an MCP client behind `pi.registerTool` in an extension.
 - **Web/UI integrations** - `pi-canvas` (inline TUI canvases - calendar, document, flights), `pi-cost-dashboard` (web dashboard), `pi-gui`, `pi-sketch` (browser-sketch → image to model), `pi-mobile` (Android client over Tailscale), `agent-desktop`.
 - **Permission / safety** - `pi-hooks/permission` (four levels), `toolwatch` (SQLite-logged approval), `nono` (Landlock/Seatbelt kernel sandbox), `safe-git`.
 - **Powerline footer / status** - `pi-powerline-footer`, `pi-sub-bar`, `usage-bar`, `session-color`, `session-emoji`, `tab-status` (all swap or augment the footer via `ctx.ui.setFooter` or `setStatus`).
@@ -389,7 +389,7 @@ The `awesome-pi-agent` index categorizes 40+ community extensions; a few that do
 - **Sandbox / remote execution** - `pi-ssh-remote` (redirect all file/cmd operations over SSH), `gondolin` (Linux micro-VM with programmable filesystem and network).
 - **Skills collections** - `pi-skills` (the canonical Claude-Code-compatible set), `pi-amplike` (Jina web search), `agent-stuff` (commit, changelog, GitHub, tmux, Sentry).
 
-Multiple Claude Code-related entries are listed under "Related Projects" - `claude-code`, `claude-code-ui`, `claude-plugins-official` (`awesome-pi-agent/README.md:148-153`) - signalling that pi positions itself as a coexisting peer, not a replacement, of Claude Code.
+The "Related Projects" section explicitly lists `anthropics/claude-code` and `anthropics/claude-plugins-official` alongside pi (`awesome-pi-agent/README.md:148-153`), signalling that pi positions itself as a coexisting peer, not a replacement, of Claude Code. A Claude Code monitoring dashboard (`claude-code-ui`) appears separately under "Tools & Utilities" (line 100).
 
 ### Nested AGENTS.md / context injection
 
@@ -409,7 +409,7 @@ The same loader supports `--system-prompt` and `--append-system-prompt`, and per
 
 The editorial stance is unusually explicit in the source. Three documents lay it out: the package README, the contribution guide, and the top-level AGENTS.md.
 
-From `packages/coding-agent/README.md:468-484`:
+From `packages/coding-agent/README.md:468-484` (Philosophy section):
 
 > Pi is aggressively extensible so it doesn't have to dictate your workflow. Features that other tools bake in can be built with extensions, skills, or installed from third-party pi packages. This keeps the core minimal while letting you shape pi to fit how you work.
 >
@@ -420,19 +420,19 @@ From `packages/coding-agent/README.md:468-484`:
 > **No built-in to-dos.** They confuse models. Use a TODO.md file, or build your own with extensions.
 > **No background bash.** Use tmux. Full observability, direct interaction.
 
-From `CONTRIBUTING.md:65-68`:
+From `CONTRIBUTING.md:65-67`:
 
 > ## Philosophy
 > pi's core is minimal. If your feature does not belong in the core, it should be an extension. PRs that bloat the core will likely be rejected.
 
-From `CONTRIBUTING.md:6-12`:
+From `CONTRIBUTING.md:5-11`:
 
 > ## The One Rule
 > **You must understand your code.** If you cannot explain what your changes do and how they interact with the rest of the system, your PR will be closed.
 >
 > Using AI to write code is fine. Submitting AI-generated slop without understanding it is not.
 
-From `AGENTS.md:1-9` (the file the maintainer's own agent picks up when working on the project):
+From `AGENTS.md:1-8` (the file the maintainer's own agent picks up when working on the project):
 
 > # Development Rules
 > ## Conversational Style
@@ -449,7 +449,7 @@ Distinctive technical choices that follow from this stance:
 - **One TypeBox-everywhere validation pipeline.** Tool parameters, settings schemas, model definitions, and provider configs all use TypeBox (`packages/ai/README.md:85`), giving JSON-serializable schemas, runtime validation, and TypeScript inference from the same source.
 - **Provider abstraction in a separate package.** `pi-ai` is shippable on its own (`packages/ai/README.md:79-83`) and is what gives pi its broad provider coverage; the agent loop lives in another shippable package (`pi-agent-core`); the coding agent is a thin layer on top. The README claims SDK consumers can drop pi-agent-core into a browser app and use `streamProxy` to push to a backend (`packages/agent/README.md:436-449`).
 - **No environment-coupled features.** No native notifications, no editor integration, no Slack hook in the core - all are extensions. The community has built every one.
-- **JSONL-tree sessions.** Sessions are sharable, forkable, and replayable text files. The maintainer publishes his own work sessions on Hugging Face (`README.md:43-47`) as training data for future coding agents.
+- **JSONL-tree sessions.** Sessions are sharable, forkable, and replayable text files. The maintainer publishes his own work sessions on Hugging Face (`README.md:32-46`) as training data for future coding agents.
 - **Lockstep versioning.** "All packages always share the same version number" (`AGENTS.md:178`). At the time of writing, every package is at 0.74.0 (`packages/coding-agent/package.json:3`).
 - **Editorial naming.** "shittycodingagent.ai" appears as the docs root in `awesome-pi-agent/README.md:5` - the project's own meta-list calls itself "shitty-list" because it was tempting. The branding is deliberately the opposite of corporate.
 

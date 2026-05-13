@@ -13,7 +13,7 @@ What makes it notable, beyond being one of the most-starred open-source alternat
 Top-level monorepo (`pnpm`/`bun` workspaces). Relevant packages under `packages/`:
 
 - `packages/opencode/` — the main package; ships the `opencode` binary, hosts the HTTP server, the agent loop, all tools, and the terminal UI as in-process code.
-- `packages/sdk/js/` — `@opencode-ai/sdk`, the generated TypeScript SDK against the opencode HTTP API (`./src/client.ts`, `./src/v2/`, with codegen output in `./src/gen/` and `./src/v2/gen/`). Used by every client and by plugins.
+- `packages/sdk/js/` — `@opencode-ai/sdk`, the generated TypeScript SDK against the opencode HTTP API (`./src/client.ts`, `./src/v2/client.ts`, with codegen output in `./src/gen/` and `./src/v2/gen/`). Used by every client and by plugins.
 - `packages/plugin/` — `@opencode-ai/plugin`, the public plugin contract (hooks, custom tools, auth providers, workspace adapters): `packages/plugin/src/index.ts`, `packages/plugin/src/tool.ts`.
 - `packages/core/` — shared utilities (`Global`, `Flag`, `AppFileSystem`, logging, npm/installation helpers).
 - `packages/desktop/` — Electron desktop wrapper (`@opencode-ai/desktop`), see `packages/desktop/package.json` and `README.md`.
@@ -25,14 +25,14 @@ The "core" — agent runtime, server, sessions, tools, providers — all lives i
 
 ### Language and runtime
 
-100% TypeScript, executed by Bun. The previous Go-based TUI has been replaced by a SolidJS + OpenTUI terminal renderer running in-process (see `packages/opencode/src/cli/cmd/tui/app.tsx:1`, which imports `@opentui/solid` and `@opentui/keymap`). `package.json` declares both `bun` and `node` import conditions:
+100% TypeScript, executed by Bun. The previous Go-based TUI has been replaced by a SolidJS + OpenTUI terminal renderer running in-process (see `packages/opencode/src/cli/cmd/tui/app.tsx:1-2`, which imports `@opentui/solid` and `@opentui/keymap`). `package.json` declares dual `bun`/`node` import conditions for the platform-specific modules — `db` and `pty` have separate Bun and Node implementations, while `#httpapi-server` resolves to the same `.node.ts` file under both conditions:
 
 ```
-"#db":          { "bun": "./src/storage/db.bun.ts", "node": "./src/storage/db.node.ts" }
-"#pty":         { "bun": "./src/pty/pty.bun.ts",    "node": "./src/pty/pty.node.ts" }
-"#httpapi-server": { "bun": "./src/server/httpapi-server.node.ts", ... }
+"#db":             { "bun": "./src/storage/db.bun.ts", "node": "./src/storage/db.node.ts", "default": "./src/storage/db.bun.ts" }
+"#pty":            { "bun": "./src/pty/pty.bun.ts",    "node": "./src/pty/pty.node.ts",    "default": "./src/pty/pty.bun.ts"    }
+"#httpapi-server": { "bun": "./src/server/httpapi-server.node.ts", "node": "./src/server/httpapi-server.node.ts", "default": "./src/server/httpapi-server.node.ts" }
 ```
-(`packages/opencode/package.json`)
+(`packages/opencode/package.json:25-40`)
 
 The Effect framework (v4 beta) is used pervasively: every long-lived concern is an `Effect.Service` with a `Layer` and a `defaultLayer`. `packages/opencode/AGENTS.md` codifies the conventions (`Effect.gen`, `Effect.fn("Domain.method")`, `Effect.fnUntraced`, `InstanceState` vs `makeRuntime`, namespace projection via `export * as Foo from "./foo"`, snake_case Drizzle columns).
 
@@ -40,9 +40,9 @@ The Effect framework (v4 beta) is used pervasively: every long-lived concern is 
 
 Even when run as a single `opencode` command, the architecture is server-first.
 
-- `opencode serve` (`packages/opencode/src/cli/cmd/serve.ts`) starts a headless server. It reads `OPENCODE_SERVER_PASSWORD` for basic auth (`packages/opencode/src/server/auth.ts:18`); if unset it warns "server is unsecured."
+- `opencode serve` (`packages/opencode/src/cli/cmd/serve.ts`) starts a headless server. It reads `OPENCODE_SERVER_PASSWORD` for basic auth (`packages/opencode/src/server/auth.ts:17-20`); if unset it warns "server is unsecured."
 - `opencode run` is non-interactive and creates an in-process server, talks to it via the SDK, streams events to stdout, exits when idle (`packages/opencode/src/cli/cmd/run.ts:1-13`).
-- `opencode` (the default subcommand is the TUI) launches the SolidJS TUI, which spawns a Bun worker that runs the same server in-process and talks to it via a JSON-RPC-over-IPC `fetch` shim (`packages/opencode/src/cli/cmd/tui/worker.ts:48-78`):
+- `opencode` (the default subcommand is the TUI) launches the SolidJS TUI, which spawns a Bun worker that runs the same server in-process and talks to it via a JSON-RPC-over-IPC `fetch` shim (`packages/opencode/src/cli/cmd/tui/worker.ts:50-78`):
 
   ```ts
   let server: Awaited<ReturnType<typeof Server.listen>> | undefined
@@ -57,7 +57,7 @@ Even when run as a single `opencode` command, the architecture is server-first.
 - `opencode attach <url>` (`packages/opencode/src/cli/cmd/tui/attach.ts`) lets the TUI connect to a remote server instead of starting its own. Headers are basic-auth-encoded via `ServerAuth.headers({ password, username })`.
 - The Electron desktop app and the web/console are additional clients of the same HTTP/SSE API.
 
-The TUI never imports the agent loop directly. Even when colocated, it goes through `createOpencodeClient` → HTTP fetch → server handlers. This is the entire point: "one of the possible clients" (README.md:137).
+The TUI never imports the agent loop directly. Even when colocated, it goes through `createOpencodeClient` → HTTP fetch → server handlers (the in-process shim in `worker.ts` literally invokes `Server.Default().app.fetch(request)`). This is the entire point: "the TUI frontend is just one of the possible clients" (README.md:137).
 
 ### Entry point and command flow
 
@@ -69,7 +69,7 @@ The TUI never imports the agent loop directly. Even when colocated, it goes thro
 
 The server is implemented on top of Effect's `@effect/platform` HttpApi (`effect/unstable/http`, `effect/unstable/httpapi`). The composition is in `packages/opencode/src/server/routes/instance/httpapi/server.ts`. Notable pieces:
 
-- Two `HttpApi` definitions: `RootHttpApi` for `/global/*` and control routes, `InstanceHttpApi` for per-instance routes (session, file, mcp, permission, provider, pty, question, project, tui, workspace, sync, v2, experimental). `OpenCodeHttpApi` composes both plus the SSE `EventApi` and a raw `PtyConnectApi` (`packages/opencode/src/server/routes/instance/httpapi/api.ts:30-59`).
+- Two `HttpApi` definitions: `RootHttpApi` for control routes and `/global/*`, `InstanceHttpApi` for per-instance routes (config, experimental, file, instance, mcp, project, pty, question, permission, provider, session, sync, v2, tui, workspace). `OpenCodeHttpApi` composes both plus the SSE `EventApi` and a raw `PtyConnectApi` (`packages/opencode/src/server/routes/instance/httpapi/api.ts:30-59`).
 - Each route group is a separately-defined `HttpApiGroup` under `groups/` with its handler in `handlers/`. All groups are typed end-to-end via Effect Schema, and the same definitions feed `OpenApi.fromApi(PublicApi)` to generate the OpenAPI spec served on `GET /doc`.
 - Middlewares: `authorizationLayer` / `authorizationRouterMiddleware` enforce basic auth, `instanceContextLayer` resolves the per-directory project instance from the `?directory=` query or `x-opencode-directory` header, `workspaceRouterMiddleware` resolves workspace routing, plus `compressionLayer`, `corsVaryFix`, `fenceLayer`, `errorLayer`, `schemaErrorLayer`.
 - `Server.listen` (`packages/opencode/src/server/server.ts:59-156`) opens a port (defaulting to 4096 when port `0` is requested), optionally publishes mDNS (`packages/opencode/src/server/mdns.ts`), and returns a `{ url, stop }` handle.
@@ -82,7 +82,7 @@ The agent loop has three coordinated layers: a top-level "session loop" that wal
 
 ### Top-level loop: `SessionPrompt.runLoop`
 
-`packages/opencode/src/session/prompt.ts:1625-1855`. The session loop is a `while (true)` that, for each iteration:
+`packages/opencode/src/session/prompt.ts:1625-1853`. The session loop is a `while (true)` that, for each iteration:
 
 1. Reads the recent messages and finds the last user message, the last assistant message, and the last finished assistant (`lastUser`, `lastAssistant`, `lastFinished`).
 2. Decides whether to exit. Loop exits when `lastAssistant.finish` is something other than `"tool-calls"`, no pending tool calls exist, and the user message id is older than the assistant id (lines 1665-1673).
@@ -110,7 +110,7 @@ A `MAX_STEPS` prompt (`session/prompt/max-steps.txt`) is appended to the very la
   )
   ```
   (lines 738-742). Compaction can short-circuit mid-stream.
-- The event handler is a switch over the AI-SDK event types (lines 226-636): `start`, `reasoning-start/delta/end`, `tool-input-start/delta/end`, `tool-call`, `tool-result`, `tool-error`, `start-step`, `finish-step`, `text-start/delta/end`, `finish`, `error`. Each writes the corresponding `MessageV2.Part` mutation through `session.updatePart` / `session.updatePartDelta` and, when the `OPENCODE_EXPERIMENTAL_EVENT_SYSTEM` flag is set, dual-writes a sync event via `sync.run(SessionEvent.…, ...)` (the v2 event-sourced session log).
+- The event handler is a switch over the AI-SDK event types (lines 227-635): `start`, `reasoning-start/delta/end`, `tool-input-start/delta/end`, `tool-call`, `tool-result`, `tool-error`, `start-step`, `finish-step`, `text-start/delta/end`, `finish`, `error`. Each writes the corresponding `MessageV2.Part` mutation through `session.updatePart` / `session.updatePartDelta` and, when the `OPENCODE_EXPERIMENTAL_EVENT_SYSTEM` flag is set, dual-writes a sync event via `sync.run(SessionEvent.…, ...)` (the v2 event-sourced session log).
 - "Doom loop" detection: after every `tool-call`, if the last three parts are identical tool calls with identical inputs, the processor asks the user for a `doom_loop` permission to keep going (lines 366-391).
 - Interruption: `Effect.onInterrupt` sets `aborted = true` and writes an aborted-error onto the assistant message (lines 744-751). Any in-flight tool call is finalized with `status: "error", error: "Tool execution aborted", metadata: { interrupted: true }` in `cleanup` (lines 676-693).
 - Retry: the whole turn is wrapped in `Effect.retry(SessionRetry.policy({ provider, parse, set }))`. `SessionRetry.policy` (`packages/opencode/src/session/retry.ts:174-197`) reads `Retry-After` / `retry-after-ms` headers when available, exponentially backs off otherwise (`RETRY_INITIAL_DELAY = 2000`, factor 2, cap 30s without headers, 32-bit max with headers), and pushes a `{ type: "retry", attempt, message, action, next }` status onto the session bus so the TUI can display it.
@@ -122,9 +122,9 @@ A `MAX_STEPS` prompt (`session/prompt/max-steps.txt`) is appended to the very la
 
 - System messages are composed from agent prompt (or provider-default prompt, see "Provider & Model Abstraction"), call-site additions, and any custom prompt on the user message (lines 103-128). After `plugin.trigger("experimental.chat.system.transform", ...)` the array is re-flattened into a two-part structure (header + everything else) so prompt-caching breakpoints are preserved.
 - `resolveTools(input)` (line 450-456) filters the candidate tool set by the agent permission ruleset and by `user.tools[k] !== false`.
-- A `_noop` dummy tool is injected when the provider is LiteLLM-or-GitHub-Copilot-flavored and the message history contains tool calls but no active tools (e.g. during compaction). This works around LiteLLM/Bedrock rejecting tools-less requests that contain tool history (lines 203-227).
+- A `_noop` dummy tool is injected when the provider is LiteLLM-flavored (auto-detected by id or opted-in via `litellmProxy: true`) or `github-copilot` and the message history contains tool calls but no active tools (e.g. during compaction). The inline comment notes that LiteLLM/Bedrock rejects tools-less requests that contain tool history (lines 203-227).
 - `experimental_repairToolCall` (lines 343-363): if the model calls a tool with the wrong case (e.g. `Read` instead of `read`), the call is rewritten; otherwise it's routed to the `invalid` tool with the parse error as input. This means the "the tool you tried to call doesn't exist" path is just another tool result the model can recover from.
-- Telemetry/OTel: every turn opens a span tagged with `session.id`, `providerID`, `modelID`, `agent`, `mode`. `experimental.openTelemetry` in config wires the AI SDK to an OTel tracer (lines 317-331).
+- Telemetry/OTel: when `experimental.openTelemetry` is enabled in config, a proxied OTel tracer is passed to the AI SDK's `experimental_telemetry`; every `streamText` span is annotated with `session.id` (the tracer proxy intercepts `startSpan` and sets the attribute, lines 317-331) and the AI SDK metadata adds `userId` and `sessionId`.
 - The model is wrapped via `wrapLanguageModel({ model, middleware: [{ transformParams: ... ProviderTransform.message(prompt, model, options) }] })`, which is where provider-specific message coercion lives (line 392-405).
 
 ### Workflow provider (GitLab DWS Agent Platform)
@@ -145,20 +145,22 @@ opencode wraps the Vercel AI SDK provider ecosystem rather than building its own
 
 ```ts
 const BUNDLED_PROVIDERS: Record<string, () => Promise<(opts: any) => BundledSDK>> = {
-  "@ai-sdk/amazon-bedrock":      () => import("@ai-sdk/amazon-bedrock").then(m => m.createAmazonBedrock),
-  "@ai-sdk/anthropic":           () => import("@ai-sdk/anthropic").then(m => m.createAnthropic),
-  "@ai-sdk/azure":               () => import("@ai-sdk/azure").then(m => m.createAzure),
-  "@ai-sdk/google":              () => import("@ai-sdk/google").then(m => m.createGoogleGenerativeAI),
-  "@ai-sdk/google-vertex":       () => import("@ai-sdk/google-vertex").then(m => m.createVertex),
-  "@ai-sdk/openai":              () => import("@ai-sdk/openai").then(m => m.createOpenAI),
-  "@ai-sdk/openai-compatible":   () => import("@ai-sdk/openai-compatible").then(m => m.createOpenAICompatible),
-  "@openrouter/ai-sdk-provider": () => import("@openrouter/ai-sdk-provider").then(m => m.createOpenRouter),
+  "@ai-sdk/amazon-bedrock":         () => import("@ai-sdk/amazon-bedrock").then(m => m.createAmazonBedrock),
+  "@ai-sdk/anthropic":              () => import("@ai-sdk/anthropic").then(m => m.createAnthropic),
+  "@ai-sdk/azure":                  () => import("@ai-sdk/azure").then(m => m.createAzure),
+  "@ai-sdk/google":                 () => import("@ai-sdk/google").then(m => m.createGoogleGenerativeAI),
+  "@ai-sdk/google-vertex":          () => import("@ai-sdk/google-vertex").then(m => m.createVertex),
+  "@ai-sdk/google-vertex/anthropic":() => import("@ai-sdk/google-vertex/anthropic").then(m => m.createVertexAnthropic),
+  "@ai-sdk/openai":                 () => import("@ai-sdk/openai").then(m => m.createOpenAI),
+  "@ai-sdk/openai-compatible":      () => import("@ai-sdk/openai-compatible").then(m => m.createOpenAICompatible),
+  "@openrouter/ai-sdk-provider":    () => import("@openrouter/ai-sdk-provider").then(m => m.createOpenRouter),
   "@ai-sdk/xai": ..., "@ai-sdk/mistral": ..., "@ai-sdk/groq": ..., "@ai-sdk/deepinfra": ...,
   "@ai-sdk/cerebras": ..., "@ai-sdk/cohere": ..., "@ai-sdk/gateway": ..., "@ai-sdk/togetherai": ...,
   "@ai-sdk/perplexity": ..., "@ai-sdk/vercel": ..., "@ai-sdk/alibaba": ...,
   "gitlab-ai-provider": ..., "@ai-sdk/github-copilot": ..., "venice-ai-sdk-provider": ...,
 }
 ```
+(23 entries total; the `@ai-sdk/github-copilot` key actually points at an in-tree adapter under `./sdk/copilot/copilot-provider`.)
 
 For local models, `@ai-sdk/openai-compatible` is the generic adapter — point it at an LM Studio / Ollama / vLLM URL and it works.
 
@@ -168,7 +170,7 @@ For local models, `@ai-sdk/openai-compatible` is the generic adapter — point i
 
 ### `models.dev` integration
 
-`packages/opencode/src/provider/models.ts:106` reads from `Flag.OPENCODE_MODELS_URL || "https://models.dev"`. The catalog (`<source>/api.json`) is cached on disk under `Global.Path.cache`, TTL'd, refreshed every 60 minutes in the background (`Effect.repeat(Schedule.spaced("60 minutes"))`, line 187). A bundled snapshot (`./models-snapshot.js`, generated at build time) is the fallback when offline. Models carry cost, limits (context/input/output), capabilities (tool_call, temperature, reasoning, attachment), modalities, and a release date; the schema is in `models.ts` lines 28-95.
+`packages/opencode/src/provider/models.ts:106` reads from `Flag.OPENCODE_MODELS_URL || "https://models.dev"`. The catalog (`<source>/api.json`) is cached on disk under `Global.Path.cache` with a 5-minute mtime-based freshness check (line 111), and a background fiber re-runs `refresh()` every 60 minutes (`Effect.repeat(Schedule.spaced("60 minutes"))`, line 187). A bundled snapshot (`./models-snapshot.js`, generated at build time) is the fallback when offline. Models carry cost, limits (context/input/output), capabilities (tool_call, temperature, reasoning, attachment), modalities, and a release date; the Model schema is at `models.ts:28-79`.
 
 This means: when a new model lands on models.dev, opencode picks it up within an hour with no code change. Users override per-model behavior under `provider.<id>.options` and `provider.<id>.models.<id>.options` in `opencode.json`; an agent's `model.options` override that; per-user-message `variant` overrides further. The merge happens in `LLM.run`:
 
@@ -197,7 +199,7 @@ export interface Interface {
 
 ### Default model
 
-`defaultModel` (line 1685) reads `cfg.model` first, then `~/.local/share/opencode/state/model.json`'s `recent` list, then the highest-sorted model of the first available provider. This is how the "last used model" sticks.
+`defaultModel` (line 1685) reads `cfg.model` first, then the `recent` list from `<Global.Path.state>/model.json`, then the highest-sorted model of the first available provider. This is how the "last used model" sticks.
 
 ### Provider-aware system prompts
 
@@ -251,7 +253,7 @@ const tool = yield* Effect.all({
 ```
 (`registry.ts:215-235`)
 
-The final tool set is `[invalid, question?, shell, read, glob, grep, edit, write, task, fetch, todo, search, scout?, skill, patch, lsp?, plan?]` plus any custom/plugin tools (lines 239-260). `webSearchEnabled(providerID)` gates `websearch` behind opencode-Zen or feature flags. The model-aware switch in `tools(input)` (line 307-319) swaps `edit`+`write` for the unified `apply_patch` tool when the model id is `gpt-*` (and not `gpt-4` or `*-oss`) — GPT-5 reasoning models prefer one big patch operation over many small edits.
+The final tool set is `[invalid, question?, shell, read, glob, grep, edit, write, task, fetch, todo, search, (code, repo_clone, repo_overview)?, skill, patch, lsp?, plan?]` plus any custom/plugin tools (lines 239-257). `question` is only included when `OPENCODE_CLIENT` is `app`/`cli`/`desktop` or `OPENCODE_ENABLE_QUESTION_TOOL` is set; `code`/`repo_clone`/`repo_overview` are gated on `OPENCODE_EXPERIMENTAL_SCOUT`; `lsp` on `OPENCODE_EXPERIMENTAL_LSP_TOOL`; `plan` on `OPENCODE_EXPERIMENTAL_PLAN_MODE && OPENCODE_CLIENT === "cli"`. `webSearchEnabled(providerID)` (line 57) gates `websearch` behind the opencode-Zen provider or `OPENCODE_ENABLE_EXA` / `OPENCODE_ENABLE_PARALLEL` flags. The model-aware switch in `tools(input)` (line 307-319) swaps `edit`+`write` for the unified `apply_patch` tool when the model id contains `gpt-` (and not `gpt-4` or `*-oss`) — GPT-5 reasoning models prefer one big patch operation over many small edits.
 
 ### Tool definition shape
 
@@ -306,17 +308,28 @@ The action levels are stored per project (`PermissionTable.data: Permission.Rule
 const defaults = Permission.fromConfig({
   "*": "allow",
   doom_loop: "ask",
-  external_directory: { "*": "ask", ...whitelistedDirs.allow },
+  external_directory: {
+    "*": "ask",
+    ...Object.fromEntries(whitelistedDirs.map((dir) => [dir, "allow"])),
+  },
   question: "deny",
   plan_enter: "deny",
   plan_exit: "deny",
   repo_clone: "deny",
   repo_overview: "deny",
-  read: { "*": "allow", "*.env": "ask", "*.env.*": "ask", "*.env.example": "allow" },
+  // mirrors github.com/github/gitignore Node.gitignore pattern for .env files
+  read: {
+    "*": "allow",
+    "*.env": "ask",
+    "*.env.*": "ask",
+    "*.env.example": "allow",
+  },
 })
 ```
 
-`build` adds `question: "allow"` and `plan_enter: "allow"`. `plan` adds `plan_exit: "allow"` and `edit: { "*": "deny", ".opencode/plans/*.md": "allow", … }` — i.e., the plan agent can write plan files into a project-local `.opencode/plans/` directory but nothing else. The user's `permission` config is merged last.
+`whitelistedDirs` is `Truncate.GLOB`, `Global.Path.tmp/*`, and the configured skill directories.
+
+`build` adds `question: "allow"` and `plan_enter: "allow"`. `plan` adds `plan_exit: "allow"`, allow-lists `<Global.Path.data>/plans/*` for `external_directory`, and sets `edit: { "*": "deny", ".opencode/plans/*.md": "allow", … }` — i.e., the plan agent can write plan files into a project-local `.opencode/plans/` directory (and the mirrored global plans path) but nothing else. The user's `permission` config is merged last.
 
 ### MCP support
 
@@ -346,7 +359,7 @@ Key tables (`packages/opencode/src/session/session.sql.ts`):
 - `message`: per assistant/user message; `data` is the v2 `MessageV2.Info` JSON minus id/sessionID.
 - `part`: per `MessageV2.Part` (text, reasoning, tool, step-start, step-finish, patch, file, agent, subtask, compaction, …). Composite index `(message_id, id)` so streaming UIs can fetch a single message's parts efficiently.
 - `todo`: per-session todo list (`(session_id, position)` composite PK).
-- `session_message`: the new v2 event-sourced session message log (one row per `EventV2` produced by the agent loop).
+- `session_message`: the new v2 session-message log keyed by `(session_id, type)`, written by the v2 session-message code path (`packages/opencode/src/v2/`).
 - `permission`: the per-project `approved` ruleset.
 
 Naming convention from `AGENTS.md`: snake_case columns, `<entity>_id` joins, `<table>_<column>_idx` indexes.
@@ -365,7 +378,7 @@ The TUI exposes session forking via `dialog-fork-from-timeline.tsx` and `dialog-
 gitdir = Global.Path.data / snapshot / <project.id> / <hash(worktree)>
 ```
 
-Every `step-start` / `start` event captures a snapshot (`snapshot.track()`). After `finish-step`, `snapshot.patch(snapshot)` produces a `Patch { files, hash, patch? }` which is stored as a `MessageV2.PatchPart`. `session.revert(messageID)` replays the patches in reverse. This works for non-git projects too because the side index is independent. `SessionRevert` (`session/revert.ts`) exposes the API.
+Every `step-start` / `start` event captures a snapshot (`snapshot.track()`; pre-captured at `processor.ts:122` before the LLM stream starts). After `finish-step`, `snapshot.patch(hash)` produces a `Patch { hash, files }` (just the snapshot hash and the changed file list) which is stored as a `MessageV2.PatchPart`. `session.revert(messageID)` replays the patches in reverse. This works for non-git projects too because the side index is independent. `SessionRevert` (`session/revert.ts`) exposes the API.
 
 ### Compaction
 
@@ -382,10 +395,10 @@ Every `step-start` / `start` event captures a snapshot (`snapshot.track()`). Aft
 
 ### Sharing
 
-opencode has two share systems:
+A single share pipeline (`packages/opencode/src/share/share-next.ts`) chooses one of two destinations per request, based on `Account.active()` (lines 210-226):
 
-- Legacy: `packages/opencode/src/share/share.sql.ts` + `share-next.ts` falls back to the public endpoint `https://opncd.ai` when there's no logged-in account.
-- New: when the user has an active account/org (`Account.active()`), shares go to `https://<console>/api/shares/...` with `Bearer` tokens and `x-org-id`.
+- No active account/org: posts to `cfg.enterprise?.url ?? "https://opncd.ai"` using the legacy API surface.
+- Active account/org: posts to `active.value.url` (the hosted console) with `Authorization: Bearer <token>` and `x-org-id`.
 
 `packages/opencode/src/share/session.ts` exposes `create`, `share`, `unshare`. The pattern:
 
@@ -408,11 +421,11 @@ const share = Effect.fn("SessionShare.share")(function* (sessionID) {
 - `Session.Event.Diff` → push snapshot diff
 - `Session.Event.Deleted` → remove share
 
-Each event enqueues into a per-session debounced map (key dedup'd by `key(item)`), then `flush(sessionID)` fires 1s later, posting JSON to `<baseUrl>/api/shares/<id>/sync` with the share `secret`. The remote console can replay messages and parts to display a live, scrolling read-only view of the session — that is the "shareable session" link people see.
+Each event enqueues into a per-session debounced map (key dedup'd by `key(item)`), then `flush(sessionID)` fires 1s later (`Effect.delay(1000)`, line 138), posting JSON to `<baseUrl>/api/share/<id>/sync` (legacy) or `<baseUrl>/api/shares/<id>/sync` (console) with the share `secret`. The remote console can replay messages and parts to display a live, scrolling read-only view of the session — that is the "shareable session" link people see.
 
 ### Event sourcing (the v2 sync layer)
 
-`packages/opencode/src/sync/README.md` documents this layer. Standard `Bus` events are fire-and-forget; the new `SyncEvent` system additionally **records every state-mutating event** in `session_message` with a monotonic sequence id (`seq`). Definitions look like:
+`packages/opencode/src/sync/README.md` documents this layer. Standard `Bus` events are fire-and-forget; the new `SyncEvent` system additionally **records every state-mutating event** in the dedicated `event` + `event_sequence` tables (`packages/opencode/src/sync/event.sql.ts`) with a monotonic per-aggregate `seq`. Definitions look like:
 
 ```ts
 const Created = SyncEvent.define({
@@ -435,7 +448,7 @@ Agents are first-class. `packages/opencode/src/agent/agent.ts` ships with:
 - `build` — default, full-access, `mode: "primary"`.
 - `plan` — read-only-by-default plan mode, allows writing `.opencode/plans/*.md` only, edits otherwise denied.
 - `general` — built-in subagent for "complex searches and multistep tasks" (mentioned in README), denies `todowrite`.
-- `explore` — read-only exploration subagent (`grep`, `glob`, `read`, `bash`, `webfetch`, `websearch` allow-listed, everything else denied), prompted by `agent/prompt/explore.txt`.
+- `explore` — read-only exploration subagent (`grep`, `glob`, `list`, `read`, `bash`, `webfetch`, `websearch` allow-listed, everything else denied; `external_directory` reads gated on the whitelisted dirs only), prompted by `agent/prompt/explore.txt`.
 - `scout` (experimental, behind `OPENCODE_EXPERIMENTAL_SCOUT`) — clones external repos into `Global.Path.repos` for deep research.
 - `compaction`, `title`, `summary` — internal hidden agents used by the loop.
 
@@ -455,7 +468,7 @@ The user can declare additional agents in `opencode.json`:
 }
 ```
 
-`Agent.Info` fields: `name`, `description`, `mode: subagent | primary | all`, `native`, `hidden`, `topP`, `temperature`, `color`, `permission` (Ruleset), `model`, `variant`, `prompt`, `options`, `steps`. Subagents are invoked via the `task` tool with `subagent_type: <name>`, primaries are the user-facing default for new sessions and switched with `Tab` in the TUI (README:103). README also mentions the convention `@general` for invoking subagents in messages, which `packages/opencode/src/v2/session-prompt.ts` (`AgentAttachment`) supports as a first-class prompt part type.
+`Agent.Info` fields: `name`, `description`, `mode: subagent | primary | all`, `native`, `hidden`, `topP`, `temperature`, `color`, `permission` (Ruleset), `model`, `variant`, `prompt`, `options`, `steps`. Subagents are invoked via the `task` tool with `subagent_type: <name>`; primaries are the user-facing default for new sessions and are switched with the `Tab` key in the TUI (README.md:102). The `@<agent>` convention for invoking subagents in messages (e.g. `@general`) is backed by `AgentAttachment` in `packages/opencode/src/v2/session-prompt.ts:27`, which models it as a first-class prompt part type.
 
 `Agent.generate({ description, model? })` (`agent.ts:369`) asks the current model to produce a fresh agent config from a natural-language description and returns `{ identifier, whenToUse, systemPrompt }`. The CLI exposes this as `opencode agent ...`.
 
@@ -518,7 +531,7 @@ Hooks:
 | `shell.env` | Inject env vars into shell tool. |
 | `experimental.chat.messages.transform` | Rewrite the whole message list. |
 | `experimental.chat.system.transform` | Rewrite the system prompt stack. |
-| `experimental.session.compacting` | Replace compaction prompt. |
+| `experimental.session.compacting` | Append extra context (or replace `prompt` entirely) before compaction starts. |
 | `experimental.compaction.autocontinue` | Disable the synthetic "continue" turn after compaction. |
 | `experimental.text.complete` | Final transform of assistant text parts. |
 
@@ -561,7 +574,7 @@ This is the most distinctive piece. opencode is structured as:
 - `GET /event?directory=...` opens an SSE stream that publishes every bus event. The server appends a `server.heartbeat` every 10s (`packages/opencode/src/server/routes/instance/httpapi/event.ts:42-66`) so proxies don't kill it. The stream lifecycle is tied to a `Bus.InstanceDisposed` sentinel.
 - Per-request instance resolution: a request without an instance context (e.g. `/global/*`) is fine; instance-scoped routes require `x-opencode-directory` header or `?directory=` query, resolved by `instanceContextLayer` middleware.
 - Auth: HTTP basic, `Authorization: Basic <base64(user:pass)>`. Server emits a warning if `OPENCODE_SERVER_PASSWORD` is unset (`packages/opencode/src/cli/cmd/serve.ts:15`).
-- mDNS: when bound to non-loopback host with `--mdns`, the server announces itself on `_opencode._tcp.local` via `packages/opencode/src/server/mdns.ts`. This is how the mobile/desktop "find local opencode" UX works.
+- mDNS: when bound to non-loopback host with `--mdns`, the server publishes a Bonjour service named `opencode-<port>` of type `http` via `packages/opencode/src/server/mdns.ts`. This is how the mobile/desktop "find local opencode" UX works.
 
 ### SDK
 
@@ -583,7 +596,7 @@ The TUI runs the actual server in a Bun **worker** process (`packages/opencode/s
 
 ## Design Philosophy & Distinctive Choices
 
-The README's FAQ explicitly contrasts opencode with Claude Code (README.md:129-137):
+The README's FAQ explicitly contrasts opencode with Claude Code (README.md:133-137):
 
 > - 100% open source
 > - Not coupled to any provider. Although we recommend the models we provide through OpenCode Zen, OpenCode can be used with Claude, OpenAI, Google, or even local models. As models evolve, the gaps between them will close and pricing will drop, so being provider-agnostic is important.
@@ -595,16 +608,16 @@ What that looks like in the code:
 
 - **API-first, UI-last.** Every UI decision is a client decision; the server has no opinion about whether you're typing in a terminal, clicking in Electron, or chatting from a mobile app. The OpenAPI doc is published at `/doc`. The plugin and SDK packages are first-class.
 - **Provider-agnosticism is structural, not nominal.** The provider list is dynamic (`https://models.dev`), the SDK is `@ai-sdk/*`, and the agent loop only ever sees a `LanguageModelV3`. New providers are mostly a `BUNDLED_PROVIDERS` entry plus optional `custom` hook.
-- **Effect everywhere.** The codebase is dogmatically Effect-ish. `packages/opencode/AGENTS.md` and `specs/effect/migration.md` (referenced in AGENTS) document Service/Layer patterns, `InstanceState` for per-project state with `ScopedCache` cleanup, `Effect.cached` for in-flight dedup, `Instance.bind` for native callback ALS, branded `Schema` types. The result is uniform tracing, structured concurrency, and deterministic teardown.
+- **Effect everywhere.** The codebase is dogmatically Effect-ish. `packages/opencode/AGENTS.md` and `packages/opencode/specs/effect/migration.md` (referenced from AGENTS) document Service/Layer patterns, `InstanceState` for per-project state with `ScopedCache` cleanup, `Effect.cached` for in-flight dedup, `Instance.bind` for native callback ALS, branded `Schema` types. The result is uniform tracing, structured concurrency, and deterministic teardown.
 - **Hand-tuned prompts per provider.** Eight provider-flavored system prompts live in `session/prompt/`. Each starts "You are OpenCode, the best coding agent on the planet" but the rest is shaped to the model's quirks.
 - **Sessions as event streams, with a sync log.** The `sync/` README spells this out: events are recorded before mutation, projectors apply them, and the same events flow through the bus for backwards compatibility. This is the foundation for replay, sharing, and eventual multi-device sync.
 - **Permissioning is pattern-based and persistable.** Every dangerous operation (`shell`, `edit`, `task`, `external_directory`, `doom_loop`, `repo_clone`) flows through `Permission.ask` with `patterns: [...]` and `always: [...]`. Approve-once vs approve-always lives in the data, not in cached agent state.
 - **`AGENTS.md` is the source of contract.** opencode reads `AGENTS.md` for its own development, ships `init` and `review` commands to seed AGENTS.md in user repos, and built-in skills like `customize-opencode` are scoped tightly to "only when editing opencode's own config." It's a small but consistent bet that this convention will become standard across agent tools.
 - **Composability with Claude Code conventions.** The skill discovery walks `~/.claude/skills/` and project `.claude/skills/`. Plugin tools accept Zod schemas. The Anthropic system prompt is structurally similar. The pitch is: bring your existing artifacts, swap providers freely.
 
-### Representative snippet — the top-level loop, slightly trimmed
+### Representative snippet — the top-level loop, heavily trimmed
 
-(`packages/opencode/src/session/prompt.ts:1625-1841`)
+Paraphrased from `packages/opencode/src/session/prompt.ts:1625-1853`. Variable destructuring, error handling, the queued-subtask/compaction branches, and `Effect.ensuring` cleanup are elided for brevity.
 
 ```ts
 const runLoop = Effect.fn("SessionPrompt.run")(function* (sessionID) {

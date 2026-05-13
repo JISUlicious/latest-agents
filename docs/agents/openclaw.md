@@ -2,7 +2,7 @@
 
 ## Overview
 
-OpenClaw is a personal, multi-channel AI assistant that runs as a long-lived local **Gateway** (a WebSocket control plane) plus a fleet of optional surfaces: a CLI, a Lit-based web Control UI, a macOS menu-bar app, iOS/Android "node" apps, and a swarm of in-process plugins for messaging channels (WhatsApp, Telegram, Slack, Discord, Signal, iMessage, Matrix, Teams, Zalo, etc.). It is a pnpm/bun TypeScript monorepo (~700 source files in `src/`, 39 extensions, 52 skills) that re-uses Mario Zechner's `pi-mono` for the agent runtime and tools, but owns its own session model, gateway protocol, sandbox stack, ACP bridge, plugin SDK, and tool wiring. The editorial stance from `VISION.md` is explicit: "the AI that actually does things... on your devices, in your channels, with your rules" — single-operator, terminal-first, lean core, everything else as plugins/skills.
+OpenClaw is a personal, multi-channel AI assistant that runs as a long-lived local **Gateway** (a WebSocket control plane) plus a fleet of optional surfaces: a CLI, a Lit-based web Control UI, a macOS menu-bar app, iOS/Android "node" apps, and a swarm of in-process plugins for messaging channels (WhatsApp, Telegram, Slack, Discord, Signal, iMessage, Matrix, Teams, Zalo, etc.). It is a pnpm TypeScript monorepo (a few thousand TS files in `src/`, 39 extensions, 52 skills) that re-uses Mario Zechner's `pi-mono` for the agent runtime and tools, but owns its own session model, gateway protocol, sandbox stack, ACP bridge, plugin SDK, and tool wiring. The editorial stance from `VISION.md` is explicit: "OpenClaw is the AI that actually does things. It runs on your devices, in your channels, with your rules." — single-operator, terminal-first, lean core, everything else as plugins/skills.
 
 ## Architecture
 
@@ -42,14 +42,14 @@ The README is explicit: *"The Gateway is just the control plane — the product 
 | --- | --- |
 | `src/` | Core TypeScript: agent runtime wiring, gateway server, channels, ACP, tools, plugin loader, CLI, web, canvas-host, infra |
 | `src/gateway/` | WS server, request handlers (`server-methods/*`), protocol schemas, client |
-| `src/agents/` | pi-mono integration, tool wiring, sandbox, sessions, providers, auth profiles (449 files; this is the largest subtree) |
+| `src/agents/` | pi-mono integration, tool wiring, sandbox, sessions, providers, auth profiles (the largest subtree by far — hundreds of files including colocated tests) |
 | `src/acp/` | Agent Client Protocol bridge (stdio NDJSON → Gateway WS) |
 | `src/plugins/` | Plugin discovery, loader (jiti), manifest registry, hooks, runtime, HTTP routes |
 | `src/plugin-sdk/` | Public re-exports for plugin authors; `.d.ts` is generated via `tsconfig.plugin-sdk.dts.json` and published as `openclaw/plugin-sdk` |
 | `src/canvas-host/` | Live agent-driven HTML/CSS/JS canvas + A2UI bundle |
 | `src/channels/`, `src/discord/`, `src/slack/`, `src/telegram/`, `src/whatsapp/`, `src/signal/`, `src/imessage/`, `src/line/`, `src/web/` | Built-in channel implementations |
 | `src/node-host/`, `src/pairing/`, `src/daemon/` | Device pairing, node mode, launchd/systemd installation |
-| `extensions/*` | 39 workspace packages, each shipping an `openclaw.plugin.json` + `index.ts` (extension-channels like `msteams`, `matrix`, `zalo`, `bluebubbles`; non-channel plugins like `acpx`, `memory-core`, `memory-lancedb`, `voice-call`, `diagnostics-otel`, `mcporter` bridges, etc.) |
+| `extensions/*` | 39 workspace packages, each shipping an `openclaw.plugin.json` + `index.ts` (extension-channels like `msteams`, `matrix`, `zalo`, `bluebubbles`; non-channel plugins like `acpx`, `memory-core`, `memory-lancedb`, `voice-call`, `diagnostics-otel`, etc.). MCP integration is via the `mcporter` skill, not a core extension. |
 | `skills/` | 52 bundled skills (`*/SKILL.md` + scripts), e.g. `coding-agent`, `clawhub`, `gemini`, `notion`, `peekaboo`, `skill-creator`, `tmux` |
 | `packages/clawdbot/`, `packages/moltbot/` | Legacy bot bundles kept inside the workspace |
 | `apps/macos/`, `apps/ios/`, `apps/android/`, `apps/shared/` | Native companion apps (SwiftUI, Compose). `OpenClawKit` is shared Swift |
@@ -62,13 +62,13 @@ The README is explicit: *"The Gateway is just the control plane — the product 
 
 - The shipped binary is the Node wrapper `openclaw.mjs` (`bin: { openclaw: "openclaw.mjs" }` in `package.json`). It tries `./dist/entry.js` then `./dist/entry.mjs`, after installing a process-warning filter (`dist/warning-filter.js`).
 - `src/entry.ts` is the actual entry: it normalizes argv (Windows quirks), applies CLI profiles, optionally **respawns itself** with `--disable-warning=ExperimentalWarning` so Node experimental warnings stay quiet (`src/entry.ts:69` `ensureExperimentalWarningSuppressed`), then dynamic-imports `./cli/run-main.js` to construct the Commander program.
-- Runtime baseline is **Node ≥22.12** (see `engines` in `package.json` and `SECURITY.md` — chosen for CVE coverage on `async_hooks` and the permission model). Bun is supported for TypeScript execution (`pnpm openclaw …`) but Node remains the production runtime.
-- `AGENTS.md`/`VISION.md` justify the TypeScript choice: "OpenClaw is primarily an orchestration system: prompts, tools, protocols, and integrations. TypeScript was chosen to keep OpenClaw hackable by default."
+- Runtime baseline is **Node ≥22.12** (see `engines` in `package.json`). The README notes Bun is optional for running TypeScript directly, but Node remains the production runtime.
+- `VISION.md` justifies the TypeScript choice: "OpenClaw is primarily an orchestration system: prompts, tools, protocols, and integrations. TypeScript was chosen to keep OpenClaw hackable by default."
 
 ### Why so many directories?
 
 - `apps/` are platform-native clients (Swift + Kotlin) — the gateway protocol is the contract; Swift models are codegen'd from JSON Schema via `pnpm protocol:gen:swift`.
-- `packages/clawdbot` and `packages/moltbot` are legacy/parallel bot bundles preserved by the rename history (VISION.md: "Warelay → Clawdbot → Moltbot → OpenClaw"); they remain pnpm workspace packages but are not the product surface.
+- `packages/clawdbot` and `packages/moltbot` are legacy/parallel bot bundles preserved by the rename history (VISION.md: "Warelay -> Clawdbot -> Moltbot -> OpenClaw"); they remain pnpm workspace packages but are not the product surface.
 - `extensions/*` are pluggable, each its own workspace package with its own `package.json`, plugin manifest, and `openclaw/plugin-sdk` peer dep.
 - `skills/*` are agent-facing prompt-and-scripts bundles (Markdown + optional binaries). They are not loaded as code by the gateway — they are read by the agent as instructions plus shell tools.
 - `ui/` is a separate pnpm workspace package (`openclaw-control-ui`), Lit-based, served by the gateway HTTP server.
@@ -81,7 +81,7 @@ OpenClaw treats ACP (Zed's Agent Client Protocol via `@agentclientprotocol/sdk` 
 
 ACP is a stdio NDJSON RPC used by IDEs (Zed primarily) to drive an agent. OpenClaw's `acp` command spawns a process that:
 
-1. Opens stdin/stdout NDJSON streams via `ndJsonStream(...)` from the SDK (`src/acp/server.ts:115-117`).
+1. Opens stdin/stdout NDJSON streams via `ndJsonStream(...)` from the SDK (`src/acp/server.ts:117`).
 2. Connects to a running OpenClaw Gateway over WebSocket using the configured `gateway.remote.*` credentials or `--url`/`--token` flags (`src/acp/server.ts:58-88`).
 3. Maps ACP sessions to Gateway session keys.
 4. Translates ACP `prompt` → gateway `chat.send`; ACP `cancel` → gateway `chat.abort`; ACP `listSessions` → gateway `sessions.list`.
@@ -146,7 +146,7 @@ error    -> error
 
 ### Two ACP roles
 
-There is also a second, less-obvious ACP integration: OpenClaw can **drive** other ACP harnesses (Codex, Claude Code, Gemini CLI, OpenCode, Pi) as nested sessions via the `extensions/acpx` plugin and the `AcpRuntimeBackend` registry (`src/acp/runtime/registry.ts`, exported through the plugin SDK at `src/plugin-sdk/index.ts:88-93`). The plugin manifest at `extensions/acpx/openclaw.plugin.json` ships an `acp-router` skill that teaches the agent when to route work into a nested ACP harness rather than the local agent loop. So OpenClaw is both an ACP **agent** (server) and an ACP **client** (via acpx) — symmetric.
+There is also a second, less-obvious ACP integration: OpenClaw can **drive** other ACP harnesses (Codex, Claude Code, Gemini CLI, OpenCode, Pi) as nested sessions via the `extensions/acpx` plugin and the `AcpRuntimeBackend` registry (`src/acp/runtime/registry.ts`, exported through the plugin SDK at `src/plugin-sdk/index.ts:87-94`). The `extensions/acpx` package bundles an `acp-router` skill (`extensions/acpx/skills/acp-router/`) that teaches the agent when to route work into a nested ACP harness rather than the local agent loop. So OpenClaw is both an ACP **agent** (server) and an ACP **client** (via acpx) — symmetric.
 
 ## Sandbox Model
 
@@ -262,13 +262,13 @@ The `--cdp-source-range` flag on the browser variant adds a CIDR allowlist at th
 
 ### Workspace bridging
 
-When `workspaceAccess: "none"`, the agent's read tool is sandbox-rooted (`createSandboxedReadTool` in `src/agents/pi-tools.ts:333`); when `"rw"`, both `read` and `write`/`edit`/`apply_patch` mount the host workspace at `/workspace` (`SANDBOX_AGENT_WORKSPACE_MOUNT = "/agent"` for `ro` mode). A `SandboxFsBridge` (`src/agents/sandbox/fs-bridge.ts`) is the abstraction the file tools use so the host-mode and sandbox-mode tools share the same surface.
+When `workspaceAccess: "none"`, the agent's read tool is sandbox-rooted (`createSandboxedReadTool` in `src/agents/pi-tools.ts:334`); when `"rw"`, both `read` and `write`/`edit`/`apply_patch` mount the host workspace at `/workspace` (`SANDBOX_AGENT_WORKSPACE_MOUNT = "/agent"` for `ro` mode, declared in `src/agents/sandbox/constants.ts:50`). A `SandboxFsBridge` (`src/agents/sandbox/fs-bridge.ts`) is the abstraction the file tools use so the host-mode and sandbox-mode tools share the same surface.
 
 Skills are mirrored into the sandbox when `workspaceAccess: "none"` so the agent can still read SKILL.md files (per `docs/gateway/sandboxing.md:67-69`).
 
 ### Podman support
 
-`setup-podman.sh` (252 lines, in the repo root) is a one-shot installer that:
+`setup-podman.sh` (251 lines, in the repo root) is a one-shot installer that:
 
 1. Creates a non-login `openclaw` user with a home dir.
 2. Enables `loginctl linger` so rootless Podman can run without an interactive login.
@@ -277,7 +277,7 @@ Skills are mirrored into the sandbox when `workspaceAccess: "none"` so the agent
 5. Drops a launch script at `~openclaw/run-openclaw-podman.sh`.
 6. Optionally installs a **systemd Quadlet** unit (`~openclaw/.config/containers/systemd/openclaw.container`) so the gateway runs as a user service: `sudo systemctl --machine openclaw@ --user start openclaw.service`.
 
-The matching env file `openclaw.podman.env` and `scripts/podman/openclaw.container.in` template ship in-repo. Notable: `setup-podman.sh:55` explicitly avoids root writes into `$OPENCLAW_HOME` to side-step "symlink/hardlink/TOCTOU footguns."
+The matching env file `openclaw.podman.env` and `scripts/podman/openclaw.container.in` template ship in-repo. Notable: `setup-podman.sh:54` explicitly avoids root writes into `$OPENCLAW_HOME` to side-step "symlink/hardlink/TOCTOU footguns."
 
 The combined picture: docker is the recommended local sandbox; podman is the recommended rootless production runtime for the gateway itself.
 
@@ -296,13 +296,13 @@ The agent loop is described in `docs/concepts/agent-loop.md` and implemented acr
 
 1. `agent` RPC validates params, resolves session (sessionKey/sessionId), persists session metadata, returns `{runId, acceptedAt}` immediately.
 2. `agentCommand` resolves model + thinking/verbose defaults, loads a **skills snapshot**, calls `runEmbeddedPiAgent`, emits lifecycle end/error if pi-mono didn't.
-3. `runEmbeddedPiAgent` (in `src/agents/pi-embedded-runner.ts`):
+3. `runEmbeddedPiAgent` (in `src/agents/pi-embedded-runner.ts` and `src/agents/pi-embedded-runner/`):
    - Serializes runs through a per-session lane and an optional global lane.
    - Resolves the model + the auth profile (auth profiles in `src/agents/auth-profiles/` — multi-profile rotation with cooldown, fallback to API-key when OAuth fails, etc.).
    - Builds the pi session and subscribes to its events.
    - Streams assistant/tool deltas back to the gateway.
    - Enforces a timeout (`agents.defaults.timeoutSeconds`, default 600s) — aborts the run on overflow.
-4. `subscribeEmbeddedPiSession` bridges pi-mono events to OpenClaw `agent` stream events:
+4. `subscribeEmbeddedPiSession` (in `src/agents/pi-embedded-subscribe.ts`) bridges pi-mono events to OpenClaw `agent` stream events:
    - tool events → `stream: "tool"`
    - assistant deltas → `stream: "assistant"`
    - lifecycle → `stream: "lifecycle"` with `phase: start | end | error`
@@ -318,16 +318,18 @@ The agent loop is described in `docs/concepts/agent-loop.md` and implemented acr
 
 ### Queue modes
 
-`docs/concepts/queue.md` defines three modes that interact with the loop:
+`docs/concepts/queue.md` defines several modes that interact with the loop. The headline ones:
 
-- **steer**: new inbound messages are injected mid-run. After each tool call, the queue is checked; if a queued message is present, remaining tool calls are skipped (their tool results become "Skipped due to queued user message"), and the queued message becomes the next user turn.
-- **followup** / **collect**: inbound messages are held until the current run ends, then start a new turn.
+- **steer**: new inbound messages are injected mid-run, cancelling pending tool calls after the next tool boundary so the queued message becomes the next user turn (falls back to `followup` when not streaming).
+- **followup**: enqueue for the next agent turn after the current run ends.
+- **collect** (default): coalesce all queued messages into a single followup turn.
+- **steer-backlog**, **interrupt** (legacy), and **queue** (alias for `steer`) round out the set.
 
 This is one of the more aggressive design choices: most agents either reject new input during a run or buffer it; OpenClaw's `steer` actively cancels pending tool calls to let the user redirect.
 
 ### Hooks during a run
 
-Plugin hooks fire at well-defined points (`src/plugins/types.ts:298-323`, full list in the Tool System section). Notable ones:
+Plugin hooks fire at well-defined points (`src/plugins/types.ts:299-323`, full list in the Tool System section). Notable ones:
 
 - `before_model_resolve` (pre-session) — can override provider/model deterministically before any history is loaded.
 - `before_prompt_build` (post-session-load) — can inject `prependContext`/`systemPrompt`.
@@ -365,12 +367,12 @@ then adds the OpenClaw-specific tools (`createOpenClawTools` — see Tool System
    - `subagents` (introspect spawned subagent state)
    - `session_status`
    - `tts`
-   - `web_search`, `web_fetch` (gated by Brave/Perplexity/Tavily/etc. config)
+   - `web_search`, `web_fetch` (gated by Brave/Perplexity/Grok/Gemini/Kimi provider config)
    - `agents_list`
 
 ### Registration
 
-Tools are not globally registered — they are **constructed per-run** based on the resolved policy stack (`src/agents/pi-tools.ts:240+`):
+Tools are not globally registered — they are **constructed per-run** based on the resolved policy stack (`src/agents/pi-tools.ts:182+`, with `resolveEffectiveToolPolicy` invoked around line 252):
 
 1. Resolve effective tool policy (`resolveEffectiveToolPolicy`) — merges global, per-agent, per-provider, per-profile, group, sandbox, and subagent layers.
 2. Filter pi-mono base tools by the policy.
@@ -384,11 +386,11 @@ Tools are not globally registered — they are **constructed per-run** based on 
 10. Normalize schemas per provider (Gemini strips constraint keywords, Anthropic keeps them, OpenAI rejects root-level unions — see `cleanToolSchemaForGemini`, `normalizeToolParameters`).
 11. Wrap with `before_tool_call` hook and abort-signal wrapping.
 
-This is one of the longer per-turn paths in the codebase (`createOpenClawCodingTools` ~310 lines) and is the canonical place to see "how OpenClaw composes a tool set."
+This is one of the longer per-turn paths in the codebase (`createOpenClawCodingTools` spans lines 182-544 of `src/agents/pi-tools.ts`) and is the canonical place to see "how OpenClaw composes a tool set."
 
 ### MCP
 
-VISION.md is unambiguous: *"OpenClaw supports MCP through `mcporter` ... we prefer this bridge model over building first-class MCP runtime into core."* Source: `https://github.com/steipete/mcporter`. The benefits cited:
+VISION.md is unambiguous: *"OpenClaw supports MCP through `mcporter` ... For now, we prefer this bridge model over building first-class MCP runtime into core."* Source: `https://github.com/steipete/mcporter`. The benefits cited:
 
 - Add/change MCP servers without restarting the gateway.
 - Keep core tool/context surface lean.
@@ -436,10 +438,11 @@ OpenClaw distinguishes three plug-in surfaces, and the distinction is editorial 
 
 39 extensions ship in-tree, including:
 
-- Channel plugins: `bluebubbles`, `msteams`, `matrix`, `discord-supplements`, `slack-supplements`, `signal`, `zalo`, `zalouser`, `tlon`, `nostr`, `mattermost`, `feishu`, `googlechat`, `irc`, `whatsapp`, `imessage`, `telegram`, `phone-control`, `talk-voice`, `voice-call`, `synology-chat`, `nextcloud-talk`
+- Channel plugins: `bluebubbles`, `msteams`, `matrix`, `discord`, `slack`, `signal`, `zalo`, `zalouser`, `tlon`, `nostr`, `mattermost`, `feishu`, `googlechat`, `irc`, `line`, `lobster`, `twitch`, `whatsapp`, `imessage`, `telegram`, `phone-control`, `talk-voice`, `voice-call`, `synology-chat`, `nextcloud-talk`
 - Capability plugins: `memory-core`, `memory-lancedb`, `diagnostics-otel`, `device-pair`, `thread-ownership`, `open-prose`, `llm-task`
 - Authentication shims: `google-gemini-cli-auth`, `qwen-portal-auth`, `minimax-portal-auth`, `copilot-proxy`
 - ACP harness embedding: `acpx` (mentioned earlier — runs Codex/Claude Code/Gemini CLI/Pi as nested ACP children)
+- Shared utilities: `shared`, `test-utils` (not user-facing plugins; reused by other extensions)
 
 #### Plugin API surface
 
@@ -571,8 +574,8 @@ Skills are gated by config (`skills` block) and by **bin presence** — e.g. `co
 
 Per-skill examples:
 
-- `coding-agent` — orchestrates Codex/Claude Code/OpenCode/Pi under background+PTY. **The single most aggressive skill in the tree** (285 lines of operator notes including "NEVER start Codex in ~/.openclaw/").
-- `clawhub` — search/install/update/publish skills from `clawhub.com` (OpenClaw's registry).
+- `coding-agent` — orchestrates Codex/Claude Code/OpenCode/Pi under background+PTY. **The single most aggressive skill in the tree** (~284 lines of operator notes including "NEVER start Codex in ~/.openclaw/").
+- `clawhub` — search/install/update/publish skills from `clawhub.ai` (OpenClaw's registry).
 - `skill-creator` — meta-skill for designing new skills.
 - `peekaboo` — macOS screenshot tooling.
 - `notion`, `obsidian`, `bear-notes`, `things-mac`, `apple-notes`, `apple-reminders` — productivity integrations.
@@ -589,7 +592,7 @@ VISION.md is clear about the editorial line: *"We still ship some bundled skills
 | **Loading** | jiti-loaded at gateway start | Read by the agent as system prompt fragments |
 | **Registration** | `register(api)` — registers tools/hooks/CLI/HTTP | None — discovered by skills snapshot |
 | **Gating** | `plugins.allow`, manifest origin checks | `requires.bins`, `skills.disabled`, etc. |
-| **Distribution** | npm + workspace-local | ClawHub (`clawhub.com`) + workspace-local |
+| **Distribution** | npm + workspace-local | ClawHub (`clawhub.ai`) + workspace-local |
 | **Lifecycle** | `register`, `activate`, `service.start/stop` | None — static prompt content |
 
 ## Gateway, Deployment & Hosting
@@ -629,7 +632,7 @@ OpenClaw is explicitly designed to run **both locally and as a hosted service**,
 | Local Docker / Podman | `Dockerfile` + `docker-compose.yml` + `setup-podman.sh` | The Dockerfile builds the gateway + Control UI; compose mounts `~/.openclaw` and exposes `18789` and bridge `18790`. |
 | Fly.io | `fly.toml` | `app = "openclaw"`, `shared-cpu-2x` / `2048mb`, persistent `openclaw_data` mount at `/data`, `min_machines_running = 1` (because of persistent WS connections), HTTPS forced, `auto_stop_machines = false`. |
 | Render.com | `render.yaml` | `runtime: docker`, `plan: starter`, 1 GB disk at `/data`, `OPENCLAW_GATEWAY_TOKEN` auto-generated. |
-| Synology / NAS | `OPENCLAW_PREFER_PNPM=1` env var hint in the Dockerfile (Bun fails on ARM Synology). |
+| Synology / NAS | `Dockerfile` | Sets `OPENCLAW_PREFER_PNPM=1` so pnpm is preferred over Bun (Bun fails on some ARM Synology builds). |
 | Tailscale Serve/Funnel | `gateway.tailscale.mode = serve | funnel` | Gateway stays on loopback; Tailscale provides external TLS (Serve = tailnet-only, Funnel = public + password required). |
 | SSH tunnel | `ssh -N -L 18789:127.0.0.1:18789 user@host` | Recommended remote-access pattern for private hosts. |
 | Fly.io "private" variant | `fly.private.toml` | Sibling config for private-only Fly deploys (companion repo serves the public DNS/installer). |
@@ -661,12 +664,12 @@ SECURITY.md "Operator Trust Model" is unusually explicit: OpenClaw does **not** 
 
 ### Lean core, fat ecosystem
 
-VISION.md "What We Will Not Merge (For Now)":
+VISION.md "What We Will Not Merge (For Now)" lists, near-verbatim:
 
 - New core skills when they can live on ClawHub.
-- Full-doc translation sets (deferred; AI-generated translations planned).
-- Commercial service integrations that don't clearly fit the model-provider category.
-- Wrapper channels around already-supported channels without a capability/security gap.
+- Full-doc translation sets for all docs (deferred; AI-generated translations planned later).
+- Commercial service integrations that do not clearly fit the model-provider category.
+- Wrapper channels around already supported channels without a clear capability or security gap.
 - First-class MCP runtime in core when `mcporter` already provides the integration path.
 - **Agent-hierarchy frameworks** (manager-of-managers / nested planner trees) as a default architecture.
 - Heavy orchestration layers that duplicate existing agent and tool infrastructure.
@@ -677,7 +680,7 @@ That last bullet about "no agent-hierarchy frameworks" is the most opinionated l
 
 VISION.md "Setup": *"OpenClaw is currently terminal-first by design. This keeps setup explicit: users see docs, auth, permissions, and security posture up front. ... We do not want convenience wrappers that hide critical security decisions from users."*
 
-SECURITY.md "Security is a deliberate tradeoff: strong defaults without killing capability." Examples:
+VISION.md frames it: "Security in OpenClaw is a deliberate tradeoff: strong defaults without killing capability." Examples:
 
 - **Sandbox mode defaults to `off`** for the main session — the personal-assistant use case is "you and your computer, fully trusted." `non-main` sandbox kicks in for shared/group contexts.
 - **DM pairing**: unknown senders on Telegram/WhatsApp/Slack/Discord/iMessage receive a short pairing code and the bot does not process their message. The operator must run `openclaw pairing approve <channel> <code>` to allowlist them. Default `dmPolicy = "pairing"` rather than `"open"`.

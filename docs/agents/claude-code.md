@@ -38,7 +38,7 @@ main.tsx -> launchRepl -> components/App.tsx
   -> screens/REPL.tsx        (5,005 lines — the de facto controller)
 ```
 
-`src/screens/REPL.tsx` is the largest interactive file in the codebase. It is named "screen" but functions as the application controller: prompt input + keybindings, message rendering, remote session hooks, IDE integration, MCP connection management, permission dialogs, background task navigation, session persistence/restoration, and proactive features. Notably, the UI does not use Redux; `AppState` exposes a custom store through React context and selector hooks (see `src/hooks/use*.ts` — ~104 hooks, most named `useMerged*`, `useTask*`, `useRemote*`, etc.).
+`src/screens/REPL.tsx` is the largest interactive file in the codebase. It is named "screen" but functions as the application controller: prompt input + keybindings, message rendering, remote session hooks, IDE integration, MCP connection management, permission dialogs, background task navigation, session persistence/restoration, and proactive features. Notably, the UI does not use Redux; `AppState` exposes a custom store through React context and selector hooks (see `src/hooks/use*.ts` — ~96 React hooks plus a `notifs/` subdirectory of 16 notification hooks). Names are predominantly unique (`useMergedTools`, `useMergedCommands`, `useMergedClients`, `useTasksV2`, `useTaskListWatcher`, `useRemoteSession`, etc.) rather than clustered by prefix.
 
 ### Two conversation runtimes
 
@@ -66,13 +66,13 @@ This split matters: `QueryEngine` is an adapter and state owner, not the kernel.
 
 `buildTool()` (Tool.ts:783) fills safe defaults (`isConcurrencySafe → false`, `isReadOnly → false`, `checkPermissions → allow`, etc.). The `Tools` type is `readonly Tool[]` rather than `Tool[]` deliberately, to make tool-set assembly grep-able.
 
-`src/tools.ts` is the composition root. `getAllBaseTools()` enumerates built-ins; `getTools(permissionContext)` filters by mode / feature flags / deny rules; `assembleToolPool(permissionContext, mcpTools)` merges built-ins with MCP tools deterministically (built-ins as a contiguous sorted prefix so the server's global cache breakpoint sits after the built-in suffix — `tools.ts:357-367`).
+`src/tools.ts` is the composition root. `getAllBaseTools()` enumerates built-ins; `getTools(permissionContext)` filters by mode / feature flags / deny rules; `assembleToolPool(permissionContext, mcpTools)` merges built-ins with MCP tools deterministically (built-ins as a contiguous sorted prefix so the server's global cache breakpoint sits after the built-in suffix — `tools.ts:354-366`).
 
 ### Command and skill composition
 
 `src/commands.ts` is the command composition root. It merges:
 
-- built-in slash commands from `src/commands/*` (~70+ commands like `/add-dir`, `/clear`, `/commit`, `/compact`, `/config`, `/init`, `/mcp`, `/memory`, `/model`, `/output-style`, `/plan`, `/plugin`, `/resume`, `/review`, `/rewind`, `/session`, `/skills`, `/share`, `/status`, `/tasks`, `/teleport`, `/theme`, …)
+- built-in slash commands from `src/commands/*` (~100 entries like `/add-dir`, `/clear`, `/commit`, `/compact`, `/config`, `/init`, `/mcp`, `/memory`, `/model`, `/output-style`, `/plan`, `/plugin`, `/resume`, `/review`, `/rewind`, `/session`, `/skills`, `/share`, `/status`, `/tasks`, `/teleport`, `/theme`, …)
 - bundled skills from `src/skills/bundled/` (e.g. `/simplify`, `/remember`, `/verify`, `/keybindings`, `/update-config`, `/debug`, `/skillify`, `/stuck`, `/loop`, `/dream` — registered in `src/skills/bundled/index.ts`)
 - built-in plugin skills (`src/plugins/builtinPlugins.ts`)
 - user/project/managed file-based skills (`src/skills/loadSkillsDir.ts`)
@@ -147,7 +147,7 @@ The streaming executor is gated by `config.gates.streamingToolExecution` and is 
 The loop treats four classes of failure as normal control:
 
 - **Prompt-too-long.** First try `contextCollapse.recoverFromOverflow(...)` (drains staged collapses), then `reactiveCompact.tryReactiveCompact(...)` (full summary), then surface. Loop guards (`hasAttemptedReactiveCompact`, `state.transition.reason !== 'collapse_drain_retry'`) prevent infinite spirals.
-- **Max-output-tokens.** Escalate to 64k once, then run up to 3 recovery turns with a synthetic user message: *"Output token limit hit. Resume directly — no apology, no recap. Pick up mid-thought if that is where the cut happened. Break remaining work into smaller pieces."* (`query.ts:1224-1228`).
+- **Max-output-tokens.** Escalate to 64k once, then run up to 3 recovery turns with a synthetic user message: *"Output token limit hit. Resume directly — no apology, no recap of what you were doing. Pick up mid-thought if that is where the cut happened. Break remaining work into smaller pieces."* (`query.ts:1224-1228`).
 - **Model fallback.** `FallbackTriggeredError` switches `currentModel`, emits synthetic tool_result blocks for any orphan tool_uses (`yieldMissingToolResultBlocks`), discards the streaming executor, and replays.
 - **Interruption.** On abort during streaming, drain the streaming executor's `getRemainingResults()` so every tool_use has a synthetic tool_result; for batch, run `yieldMissingToolResultBlocks(assistantMessages, 'Interrupted by user')`. Cleanup hooks for "computer use" / Chicago MCP fire to unhide overlays and release locks.
 
@@ -189,11 +189,17 @@ The full registration is in `src/tools.ts:getAllBaseTools()`. The major families
 - `BriefTool` — Kairos primary communication channel
 
 **Automation / background**
-- `SleepTool` (Proactive / Kairos)
-- `CronCreateTool` / `CronListTool` / `CronDeleteTool` (`AGENT_TRIGGERS`)
+- `SleepTool` (`PROACTIVE` / `KAIROS`)
+- `CronCreateTool` / `CronListTool` / `CronDeleteTool` (`AGENT_TRIGGERS`; under `src/tools/ScheduleCronTool/`)
 - `RemoteTriggerTool` (`AGENT_TRIGGERS_REMOTE`)
-- `MonitorTool`, `PushNotificationTool`, `SendUserFileTool`, `SubscribePRTool` (Kairos variants)
-- `ScheduleCronTool`
+- `MonitorTool` (`MONITOR_TOOL`), `PushNotificationTool` (Kairos push notifications), `SendUserFileTool` (`KAIROS`), `SubscribePRTool` (`KAIROS_GITHUB_WEBHOOKS`)
+
+**Diagnostics / experimental**
+- `SnipTool` (`HISTORY_SNIP`), `CtxInspectTool` (`CONTEXT_COLLAPSE`), `OverflowTestTool` (`OVERFLOW_TEST_TOOL`)
+- `TerminalCaptureTool` (`TERMINAL_PANEL`), `WebBrowserTool` (`WEB_BROWSER_TOOL`)
+- `ListPeersTool` (`UDS_INBOX`), `WorkflowTool` (`WORKFLOW_SCRIPTS`)
+- `VerifyPlanExecutionTool` (`CLAUDE_CODE_VERIFY_PLAN`)
+- `SuggestBackgroundPRTool` (ant-only), `TestingPermissionTool` (test builds)
 
 **Special**
 - `ToolSearchTool` — deferred-tool loader
@@ -307,7 +313,7 @@ Most of this is markdown + frontmatter — `loadPluginCommands.ts` shares the ma
 
 ### Slash commands
 
-`src/commands/` has ~90 entries. They fall into a few categories:
+`src/commands/` has ~100 entries (mix of `.ts` files and subdirectories). They fall into a few categories:
 
 - **Local textual** (`/clear`, `/exit`, `/help`)
 - **Local JSX/Ink dialogs** (`/config`, `/permissions`, `/model`, `/output-style`, `/theme`, `/plugin`, `/agents`, `/hooks`, `/install-github-app`, `/install-slack-app`, `/onboarding`, `/voice`)
@@ -341,18 +347,18 @@ Kairos mode keeps daily logs at `<autoMemPath>/logs/YYYY/MM/YYYY-MM-DD.md`; a ni
 
 ### Context compaction stack
 
-This is one of the more sophisticated parts of the codebase. Stages, in order on each iteration (`src/query.ts:365-468`):
+This is one of the more sophisticated parts of the codebase. Stages, in order on each iteration (`src/query.ts:379-468`):
 
-1. **Tool-result budget** — replace oversized outputs with disk placeholders
-2. **Snip** (`services/compact/snipCompact.ts`) — remove mid-history tokens past a threshold, leaving a marker
+1. **Tool-result budget** — replace oversized outputs with disk placeholders (`utils/toolResultStorage.ts:applyToolResultBudget`)
+2. **Snip** — remove mid-history tokens past a threshold, leaving a marker (gated on `HISTORY_SNIP`; loaded via `require('./services/compact/snipCompact.js')` at `query.ts:115`, file not present in this external snapshot)
 3. **Microcompact** (`services/compact/microCompact.ts`) — replace stale per-tool blocks with summaries; can use cache-aware deletion (`CACHED_MICROCOMPACT`) that defers boundary messages until the API reports `cache_deleted_input_tokens`
-4. **Context collapse** (`services/contextCollapse/`) — project read/search groups into collapsed views; stored as a commit log so the projection replays across turns
+4. **Context collapse** — project read/search groups into collapsed views; stored as a commit log so the projection replays across turns (gated on `CONTEXT_COLLAPSE`; loaded via `require('./services/contextCollapse/index.js')` at `query.ts:18`, directory not present in this snapshot)
 5. **Autocompact** (`services/compact/autoCompact.ts`) — full summarization once over threshold; produces a summary message that replaces the conversation prefix
 
 Plus two reactive paths invoked only on overflow / max tokens:
 
-- **Collapse drain** — emit any staged collapse commits
-- **Reactive compact** (`services/compact/reactiveCompact.ts`) — full summary triggered by a real 413 from the API, not a client-side estimate
+- **Collapse drain** — emit any staged collapse commits (same context-collapse module)
+- **Reactive compact** — full summary triggered by a real 413 from the API, not a client-side estimate (gated on `REACTIVE_COMPACT`; loaded via `require('./services/compact/reactiveCompact.js')` at `query.ts:15`, file not present in this snapshot)
 
 The architectural reading: the loop assumes context pressure is normal. Compaction is part of the main loop body, not a separate maintenance pass.
 

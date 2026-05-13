@@ -8,14 +8,14 @@ Hermes Agent (NousResearch/hermes-agent) is Nous Research's self-improving, open
 
 ### Top-level layout
 
-The development guide `/tmp/agent-research/hermes-agent/AGENTS.md` provides the canonical map (lines 22-63). The load-bearing entry points are top-level Python files, with subsystems in directories:
+The development guide `AGENTS.md` provides the canonical map (lines 22-63). The load-bearing entry points are top-level Python files, with subsystems in directories (LOC counts verified with `wc -l`):
 
 ```
 hermes-agent/
-├── run_agent.py          # AIAgent class — core conversation loop (~12k LOC)
+├── run_agent.py          # AIAgent class — core conversation loop (~15.7k LOC)
 ├── model_tools.py        # Tool orchestration, discover_builtin_tools()
 ├── toolsets.py           # Toolset definitions, _HERMES_CORE_TOOLS list
-├── cli.py                # HermesCLI — interactive CLI orchestrator (~11k LOC)
+├── cli.py                # HermesCLI — interactive CLI orchestrator (~13.5k LOC)
 ├── hermes_state.py       # SessionDB — SQLite session store (FTS5 search)
 ├── batch_runner.py       # Parallel batch processing
 ├── agent/                # Provider adapters, memory, caching, compression
@@ -93,9 +93,9 @@ from acp.schema import (
 )
 ```
 
-(`acp_adapter/server.py:17-58`)
+(`acp_adapter/server.py:17-58`, abridged — the actual import list is longer.)
 
-`acp_adapter/__init__.py` describes it as: *"ACP (Agent Communication Protocol) adapter for hermes-agent."* The adapter advertises capabilities (`server.py`), handles ACP RPC methods (`new_session`, `load_session`, `resume_session`, `prompt`, `request_permission`, `set_session_model`, `list_sessions`, `fork_session`, …), and bridges them to `AIAgent`. There is no `acp_registry/` directory in the actually-shipped tree — the README and AGENTS.md tree describe only `acp_adapter/`.
+`acp_adapter/__init__.py` describes it as: *"ACP (Agent Communication Protocol) adapter for hermes-agent."* The adapter advertises capabilities (`server.py`), handles ACP RPC methods (`new_session`, `load_session`, `resume_session`, `prompt`, `request_permission`, `set_session_model`, `list_sessions`, `fork_session`, …), and bridges them to `AIAgent`. The shipped tree also includes a small sibling `acp_registry/` directory containing only `agent.json` + `icon.svg` (ACP agent-registry metadata, not Python code).
 
 ### How the adapter maps ACP to AIAgent
 
@@ -109,7 +109,7 @@ Three concerns are bridged:
 
 2. **Events** — `acp_adapter/events.py` produces ACP `session_update` notifications from `AIAgent` callbacks. `AIAgent` runs in a worker thread (a `ThreadPoolExecutor` in `server.py:85` with 4 workers); ACP's asyncio loop lives on the main thread. The events module bridges them via `asyncio.run_coroutine_threadsafe()`. Each agent callback type — tool start, tool progress, message chunk, reasoning — becomes the corresponding ACP `SessionUpdate` variant.
 
-3. **Permissions** — `acp_adapter/permissions.py::make_approval_callback()` translates ACP's `request_permission` RPC (with `PermissionOption` kinds `allow_once`/`allow_always`/`reject_once`/`reject_always`) into the string-returning approval callback that Hermes' terminal tool expects. From `permissions.py:17-23`:
+3. **Permissions** — `acp_adapter/permissions.py::make_approval_callback()` translates ACP's `request_permission` RPC (with `PermissionOption` kinds `allow_once`/`allow_always`/`reject_once`/`reject_always`) into the string-returning approval callback that Hermes' terminal tool expects. From `permissions.py:18-23`:
 
    ```python
    _KIND_TO_HERMES = {
@@ -130,14 +130,13 @@ The Nous research stack is "claw-aware" — OpenClaw is the precursor agent that
 
 ### Shape of the loop
 
-The `AIAgent` class in `run_agent.py` (the development guide pegs it at "~12k LOC") runs a fully synchronous, OpenAI-format chat-completions loop with a budget and an interrupt check. `AGENTS.md` lines 121-137 shows the canonical sketch:
+The `AIAgent` class in `run_agent.py` (~15.7k LOC; the development guide describes it more loosely as "~12k LOC") runs a fully synchronous, OpenAI-format chat-completions loop with a budget and an interrupt check. `AGENTS.md` lines 121-137 shows the canonical sketch:
 
 ```python
 while (api_call_count < self.max_iterations and self.iteration_budget.remaining > 0) \
         or self._budget_grace_call:
     if self._interrupt_requested: break
-    response = client.chat.completions.create(
-        model=model, messages=messages, tools=tool_schemas)
+    response = client.chat.completions.create(model=model, messages=messages, tools=tool_schemas)
     if response.tool_calls:
         for tool_call in response.tool_calls:
             result = handle_function_call(tool_call.name, tool_call.args, task_id)
@@ -153,13 +152,13 @@ Messages follow vanilla OpenAI format: `{"role": "system/user/assistant/tool", .
 
 ### Tool-calling format: native, but open-weights-aware
 
-Hermes uses the **provider-native** tool calling path in normal operation — it sends `tools=[...]` and reads structured `response.tool_calls` from the response. But it ships with a full set of text-side parsers for the case where the provider returns raw tokens (e.g. running an open model against vLLM's `/generate`). `environments/tool_call_parsers/` (cataloged in `environments/README.md` lines 113-124) is a library of `extract_tool_calls()` reimplementations:
+Hermes uses the **provider-native** tool calling path in normal operation — it sends `tools=[...]` and reads structured `response.tool_calls` from the response. But it ships with a full set of text-side parsers for the case where the provider returns raw tokens (e.g. running an open model against vLLM's `/generate`). `environments/tool_call_parsers/` (cataloged in `environments/README.md` lines 116-126) is a library of `extract_tool_calls()` reimplementations:
 
 - `hermes` — the **Hermes / ChatML `<tool_call>` XML format** (Nous's own preferred format for Hermes-family models)
 - `mistral` — `[TOOL_CALLS]`
 - `llama3_json`, `qwen`, `qwen3_coder`, `deepseek_v3`, `deepseek_v3_1`, `kimi_k2`, `longcat`, `glm45`, `glm47`
 
-This is unusual: the agent expects to be portable across very different open-weight tool-call dialects, and ships the parsers as part of the agent rather than depending on the inference server for normalization. The default for RL/batch use is `tool_call_parser = "hermes"` (`environments/README.md` line 322), reflecting Nous's home turf.
+This is unusual: the agent expects to be portable across very different open-weight tool-call dialects, and ships the parsers as part of the agent rather than depending on the inference server for normalization. The default for RL/batch use is `tool_call_parser = "hermes"` (`environments/README.md` line 323), reflecting Nous's home turf.
 
 ### Prompt assembly
 
@@ -311,7 +310,7 @@ Auto-discovery means there is **no central import list** to maintain; just addin
 
 ### Toolsets
 
-`toolsets.py` defines a single `TOOLSETS` dict. Each platform picks a base toolset (Telegram uses `messaging`, the CLI uses the core bundle). The current toolset keys (`AGENTS.md` line 593-596):
+`toolsets.py` defines a single `TOOLSETS` dict. Each platform picks a per-platform toolset (e.g. Telegram → `hermes-telegram`, Discord → `hermes-discord`), most of which inherit `_HERMES_CORE_TOOLS`. There's also a generic `messaging` toolset for cross-platform send. The current toolset keys (`AGENTS.md` lines 592-596):
 
 > *"browser, clarify, code_execution, cronjob, debugging, delegation, discord, discord_admin, feishu_doc, feishu_drive, file, homeassistant, image_gen, kanban, memory, messaging, moa, rl, safe, search, session_search, skills, spotify, terminal, todo, tts, video, vision, web, yuanbao."*
 
@@ -330,7 +329,7 @@ Skills are *procedural memory* — Markdown documents the agent can load on dema
 
 And the format is **agentskills.io compatible** — the README explicitly states: *"Compatible with the [agentskills.io](https://agentskills.io) open standard."* This makes Hermes skills portable to/from any other agent supporting the standard.
 
-A `SKILL.md` is a Markdown file with YAML frontmatter (`tools/skills_tool.py:28-46`):
+A `SKILL.md` is a Markdown file with YAML frontmatter. From `tools/skills_tool.py:28-46`:
 
 ```yaml
 ---
@@ -346,9 +345,16 @@ metadata:
   hermes:
     tags: [fine-tuning, llm]
     related_skills: [peft, lora]
-    fallback_for_toolsets: [web]   # show only when toolset is unavailable
-    requires_toolsets: [terminal]  # show only when toolset is available
 ---
+```
+
+`CONTRIBUTING.md` lines 393-401 documents additional Hermes-specific keys under `metadata.hermes` for conditional visibility:
+
+```yaml
+metadata:
+  hermes:
+    fallback_for_toolsets: [web]      # Show ONLY when these toolsets are unavailable
+    requires_toolsets: [terminal]     # Show ONLY when these toolsets are available
 ```
 
 The `fallback_for_*` / `requires_*` conditions (`CONTRIBUTING.md` lines 393-401) let skills present themselves *conditionally* — e.g. a DuckDuckGo search skill that only appears when Firecrawl (the paid `web` toolset) is unavailable. Filtering happens in `agent/prompt_builder.py::build_skills_system_prompt()` via `_skill_should_show()`.
@@ -536,7 +542,7 @@ What makes the gateway non-trivial:
 1. **Cross-platform session continuity** — the same user can DM the bot on Telegram, follow up on Discord, then check status from email; sessions are keyed in a way that supports this if `terminal.cwd` is shared and the credentials are linked. The README calls this *"cross-platform conversation continuity."*
 2. **Voice memo transcription** — voice notes received via messaging are STT'd before the agent sees them (`stt` config section).
 3. **Background-process watchers** — when an agent runs `terminal(background=True, notify_on_complete=True)` from a messaging session, the gateway runs a watcher that detects completion and triggers a new agent turn delivered to the same channel (`AGENTS.md` lines 762-772). Verbosity controlled by `display.background_process_notifications` (`all` / `result` / `error` / `off`).
-4. **Cron is in the gateway by default** — `kanban.dispatch_in_gateway: true`, and `cron/scheduler.py` is invoked from the gateway's background-thread tick. Running the gateway gives you autonomous-Hermes for free.
+4. **Cron is in the gateway by default** — `cron/scheduler.py` is invoked from a background thread in the gateway (`_start_cron_ticker` in `gateway/run.py`, default 60s interval). The kanban dispatcher is also in the gateway by default (`kanban.dispatch_in_gateway: true`, `AGENTS.md` line 727). Running the gateway gives you autonomous-Hermes for free.
 5. **Two-guard architecture** — `AGENTS.md` lines 855-865 documents that messages pass through both `gateway/platforms/base.py::_pending_messages` queue *and* `gateway/run.py`'s control-command interception. Approval and `/stop` commands must bypass both guards to reach a running agent — getting this wrong has been a recurring bug class.
 
 The `api_server` adapter is an *OpenAI-compatible HTTP server* exposed by the gateway — Hermes can pretend to be a chat-completions provider for other tools, with the agent looping behind it.
