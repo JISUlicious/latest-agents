@@ -19,11 +19,15 @@
 
 ### Slide 2: The 30-second story
 
-- **Visual:** horizontal timeline as a single Mermaid `graph LR`.
-  - Nodes: `Transformer (2017)` → `ChatGPT (2022)` → `Tools (2023)` → `Reasoning (2024)` → `Today's agents (2026)`.
-  - One small icon per node.
-- **Text:** title only — *"From a paper to a product category."*
-- **Speaker notes:** the whole talk is unpacking this one line. 5 inflection points; ~9 years.
+- **Visual:** Mermaid `graph TD` showing divergence-then-convergence (diamond shape).
+  - Trunk: `Transformer (2017)` → `ChatGPT (2022)`
+  - ChatGPT fans out into three parallel branches:
+    - `Learned to think` — reasoning research → trained reasoning models *(CoT 2022 → ReAct 2022 → o1 2024 → R1 2025)*
+    - `Learned to act` — tool use *(WebGPT 2021 → Toolformer 2023 → function calling 2023)*
+    - `Learned to coordinate` — frameworks → standards *(LangChain 2022 → AutoGPT 2023 → MCP 2024 → ACP/SKILL.md/AGENTS.md 2025)*
+  - The three branches converge into `Today's agents (2026)`.
+- **Text:** title only — *"Three threads, one convergence."*
+- **Speaker notes:** This diagram is the *structure of the talk*. The three branches map directly onto sections of the deck — slide 6 covers "think," slide 7 covers "act," slides 9-14 cover "coordinate." A linear timeline would be misleading here: research on reasoning and tool use ran in parallel through 2022-2023, not in sequence; orchestration and standards layered on top. The honest shape is divergence-then-convergence.
 
 ### Slide 3: Thesis preview
 
@@ -338,27 +342,28 @@
 
 For implementation later, the diagrams to author:
 
-1. **Timeline strip** (slides 2, 9) — Mermaid `graph LR` or pure HTML horizontal flex.
+1. **Diamond (divergence→convergence)** (slide 2) — Mermaid `graph TD` with one trunk, three branches, one convergence node.
 2. **Before/after side-by-side** (slide 4) — HTML two-column.
 3. **Stacked message frame** (slide 5) — ASCII art or HTML.
 4. **Reasoning lineage** (slide 6) — Mermaid `graph LR`.
 5. **Tool-call sequence** (slide 7) — Mermaid `sequenceDiagram`.
 6. **Circular ReAct loop** (slide 8) — Mermaid `graph TD` with feedback edge.
-7. **Two-column lessons** (slide 10) — HTML.
-8. **Two-axis steering** (slide 11) — HTML two-column with iconography.
-9. **Four-standard stack** (slide 12) — HTML horizontal cards.
-10. **LSP/ACP/MCP layered stack** (slide 13) — HTML vertical layers.
-11. **Progressive-disclosure flow** (slide 14) — Mermaid `graph LR` plus token-cost callout.
-12. **Five-agent grid** (slide 15) — HTML 5-column.
-13. **Family-tree graph** (slide 16) — Mermaid `graph TD`.
-14. **One-loop-many-policies hub** (slide 17) — Mermaid `graph LR` with center node + 4 outbound edges.
-15. **Universals checklist** (slide 18) — HTML.
-16. **Rifts comparison** (slide 19) — HTML 2-column.
-17. **Canonical shape block** (slide 20) — Mermaid `graph TD`.
-18. **Problem-class decision tree** (slide 21) — Mermaid `graph TD`.
-19. **10-item checklist** (slide 22) — HTML grid.
+7. **Timeline strip** (slide 9) — Mermaid `graph LR` or pure HTML horizontal flex showing the orchestration-framework wave dates.
+8. **Two-column lessons** (slide 10) — HTML.
+9. **Two-axis steering** (slide 11) — HTML two-column with iconography.
+10. **Four-standard stack** (slide 12) — HTML horizontal cards.
+11. **LSP/ACP/MCP layered stack** (slide 13) — HTML vertical layers.
+12. **Progressive-disclosure flow** (slide 14) — Mermaid `graph LR` plus token-cost callout.
+13. **Five-agent grid** (slide 15) — HTML 5-column.
+14. **Family-tree graph** (slide 16) — Mermaid `graph TD`.
+15. **One-loop-many-policies hub** (slide 17) — Mermaid `graph LR` with center node + 4 outbound edges.
+16. **Universals checklist** (slide 18) — HTML.
+17. **Rifts comparison** (slide 19) — HTML 2-column.
+18. **Canonical shape block** (slide 20) — Mermaid `graph TD`.
+19. **Problem-class decision tree** (slide 21) — Mermaid `graph TD`.
+20. **10-item checklist** (slide 22) — HTML grid.
 
-19 diagram *types* across 23 slides (the timeline strip is reused on slides 2 and 9, so 20 diagram instances). Three slides are text-only: 1 (title), 3 (thesis preview), 23 (closing). The remaining 20 slides each carry one diagram.
+20 diagrams across 23 slides — one per non-text slide. Three slides are text-only: 1 (title), 3 (thesis preview), 23 (closing).
 
 ## Notes on style
 
