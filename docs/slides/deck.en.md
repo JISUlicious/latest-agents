@@ -216,14 +216,9 @@ style: |
 <div class="spacer"></div>
 
 <svg viewBox="0 0 1680 660" style="width:100%;height:auto;max-height:640px;">
-  <!-- Trunk -->
-  <rect x="710" y="20" width="260" height="88" rx="6" class="stroke fill-paper" stroke-width="1.5" />
-  <text x="840" y="56" text-anchor="middle" class="label-title">Transformer</text>
-  <text x="840" y="92" text-anchor="middle" class="label-tiny">2017</text>
-  <line x1="840" y1="108" x2="840" y2="148" class="stroke" stroke-width="1.5" />
   <rect x="710" y="148" width="260" height="88" rx="6" class="stroke fill-paper" stroke-width="1.5" />
-  <text x="840" y="184" text-anchor="middle" class="label-title">ChatGPT</text>
-  <text x="840" y="220" text-anchor="middle" class="label-tiny">NOV 2022</text>
+  <text x="840" y="184" text-anchor="middle" class="label-title">Transformer</text>
+  <text x="840" y="220" text-anchor="middle" class="label-tiny">2017</text>
 
   <!-- Three diverging lines -->
   <path d="M 840 236 C 840 270, 280 270, 280 300" class="stroke-1" stroke-width="1.5" fill="none" />
@@ -266,10 +261,10 @@ style: |
 <!--
 [speaker notes]
 - AI agents aren't a single invention — three threads grew in parallel.
-- A common base: the Transformer (2017) and the chat-model interface (ChatGPT, 2022).
+- Common base: the Transformer (2017).
 - On top of that, reasoning, tool use, and orchestration developed nearly in parallel — all converging on today's agents.
 - This diagram is the roadmap for the whole talk; each branch is one section.
-- We don't draw a linear timeline because CoT (Jan 2022) predates ChatGPT (Nov 2022).
+- We don't draw a linear timeline because CoT (Jan 2022) was already at hand.
 -->
 
 ---

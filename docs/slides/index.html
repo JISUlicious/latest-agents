@@ -14,7 +14,7 @@
 <script type="application/json" id="speaker-notes">
 [
   "안녕하세요. 약 60분 동안 함께 이야기 나누겠습니다. 한 줄 약속은 단순합니다 — 끝나고 나면 오늘날의 AI agents가 왜 다른지, 그리고 그들 사이에서 어떻게 고를지 이해할 수 있게 됩니다. 사전 AI 배경 지식은 필요 없습니다. 용어는 진행하면서 정의합니다. Q&A는 마지막에 받겠습니다.",
-  "AI agents는 단일 발명품이 아닙니다. 세 갈래가 병렬로 자라났습니다. 공통 기반은 Transformer (2017)와 chat-model interface (ChatGPT, 2022). 그 위에서 reasoning, tool use, orchestration이 거의 동시에 발전해 — 모두 오늘의 agents로 수렴합니다. 이 도식이 talk 전체의 roadmap이고, 각 branch가 한 section입니다. linear timeline으로 그리지 않는 이유는 — CoT (2022.01)가 ChatGPT (2022.11)보다 먼저 나왔기 때문입니다.",
+  "AI agents는 단일 발명품이 아닙니다. 세 갈래가 병렬로 자라났습니다. 공통 기반은 Transformer (2017). 그 위에서 reasoning, tool use, orchestration이 거의 동시에 발전해 — 모두 오늘의 agents로 수렴합니다. 이 도식이 talk 전체의 roadmap이고, 각 branch가 한 section입니다.",
   "결론을 먼저 던집니다. 청중이 어디로 가는지 알면 인지 부담이 줄어듭니다. Architecture는 settled됐고, 모든 modern agent — claude-code, opencode, pi-mono, hermes-agent, openclaw — 가 같은 building block 위에서 만들어집니다. 차이는 *어떤 building block을 어떻게 조합하느냐*에 있지만, 그 차이가 이 talk의 메시지는 아닙니다. 메시지는 — 이 building block들이 어떻게 evolve해서 지금의 architecture에 도달했는가. 나머지 talk이 이 주장을 증명합니다.",
   "전체 흐름의 지도입니다. 다섯 부분. Part I — 어떻게 여기까지 왔는지, 단어 예측에서 agent loop까지. Part II — 그 위에 modern toolkit (steering, standards)이 어떻게 쌓였는지. Part III — 그 결과 오늘의 agents가 어떤 모양이 됐는지, 다섯 examples로 봅니다. Part IV — 그 다섯이 공통으로 settle한 patterns. Part V — 종합, 한 도식과 2026의 floor. 역사는 빠르게, 현재의 architecture는 천천히. 한 section만 기억하신다면 — Part IV, settled patterns입니다.",
   "",
@@ -77,17 +77,11 @@
     <div class="spacer"></div>
 
     <svg viewBox="0 0 1680 660" style="width:100%;height:auto;max-height:640px;">
-      <!-- Trunk: Transformer -> ChatGPT -->
+      <!-- Trunk: Transformer -->
       <g>
-        <rect x="710" y="20" width="260" height="88" rx="6" class="stroke fill-paper" stroke-width="1.5" />
-        <text x="840" y="56" text-anchor="middle" class="label-title">Transformer</text>
-        <text x="840" y="92" text-anchor="middle" class="label-tiny">2017</text>
-
-        <line x1="840" y1="108" x2="840" y2="148" class="stroke" stroke-width="1.5" />
-
         <rect x="710" y="148" width="260" height="88" rx="6" class="stroke fill-paper" stroke-width="1.5" />
-        <text x="840" y="184" text-anchor="middle" class="label-title">ChatGPT</text>
-        <text x="840" y="220" text-anchor="middle" class="label-tiny">NOV 2022</text>
+        <text x="840" y="184" text-anchor="middle" class="label-title">Transformer</text>
+        <text x="840" y="220" text-anchor="middle" class="label-tiny">2017</text>
 
         <!-- Three diverging lines -->
         <path d="M 840 236 C 840 270, 280 270, 280 300" class="stroke-1" stroke-width="1.5" fill="none" />

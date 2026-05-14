@@ -209,7 +209,7 @@ style: |
 
 ---
 
-<div class="eyebrow">3줄 요약</div>
+<div class="eyebrow">요약</div>
 
 ## <span class="title">Reasoning, Tool, Orchestration</span>
 
@@ -217,13 +217,9 @@ style: |
 
 <svg viewBox="0 0 1680 660" style="width:100%;height:auto;max-height:640px;">
   <!-- Trunk -->
-  <rect x="710" y="20" width="260" height="88" rx="6" class="stroke fill-paper" stroke-width="1.5" />
-  <text x="840" y="56" text-anchor="middle" class="label-title">Transformer</text>
-  <text x="840" y="92" text-anchor="middle" class="label-tiny">2017</text>
-  <line x1="840" y1="108" x2="840" y2="148" class="stroke" stroke-width="1.5" />
   <rect x="710" y="148" width="260" height="88" rx="6" class="stroke fill-paper" stroke-width="1.5" />
-  <text x="840" y="184" text-anchor="middle" class="label-title">ChatGPT</text>
-  <text x="840" y="220" text-anchor="middle" class="label-tiny">NOV 2022</text>
+  <text x="840" y="184" text-anchor="middle" class="label-title">Transformer</text>
+  <text x="840" y="220" text-anchor="middle" class="label-tiny">2017</text>
 
   <!-- Three diverging lines -->
   <path d="M 840 236 C 840 270, 280 270, 280 300" class="stroke-1" stroke-width="1.5" fill="none" />
@@ -266,10 +262,9 @@ style: |
 <!--
 [발표 시 짚을 포인트]
 - AI agents는 단일 발명품이 아니다. 세 갈래가 병렬로 자라났다.
-- 공통 기반: Transformer (2017)와 chat-model interface (ChatGPT, 2022).
+- 공통 기반: Transformer (2017).
 - 그 위에서 reasoning, tool use, orchestration이 거의 동시에 발전 — 모두 오늘의 agents로 수렴.
 - 이 도식이 talk 전체의 roadmap. 각 branch가 한 section.
-- linear timeline으로 그리지 않는 이유: CoT (2022.01)는 ChatGPT (2022.11)보다 먼저였다.
 -->
 
 ---
@@ -280,7 +275,7 @@ style: |
 
 <p class="hero-text">
 현재의 modern agent는<br />
-같은 <em>구조</em>로 수렴되었다.<br />
+하나의 <em>구조</em>로 수렴.<br />
 <span style="color:var(--muted);font-style:italic;">Similar building blocks, </br>various surface.</span>
 </p>
 
