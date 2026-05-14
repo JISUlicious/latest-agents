@@ -1,1028 +1,1415 @@
 ---
 marp: true
 theme: default
-size: 16:9
-paginate: true
-backgroundColor: white
-header: 'Modern AI Agents'
-footer: '2026-05'
+size: 1920x1080
+paginate: false
+header: ''
+footer: ''
 style: |
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Geist:wght@300..700&family=Noto+Serif+KR:wght@300..700&family=Noto+Sans+KR:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --type-display: 128px;
+    --type-numeral: 220px;
+    --type-title: 68px;
+    --type-subtitle: 44px;
+    --type-lede: 38px;
+    --type-body: 30px;
+    --type-small: 24px;
+    --type-eyebrow: 24px;
+    --pad-x: 120px;
+    --pad-y: 96px;
+    --gap-title: 56px;
+    --gap-item: 28px;
+    --gap-tight: 16px;
+    --font-serif: "Newsreader", "Noto Serif KR", Georgia, serif;
+    --font-sans:  "Geist", "Noto Sans KR", "Inter", -apple-system, sans-serif;
+    --font-mono:  "JetBrains Mono", "Noto Sans KR", ui-monospace, monospace;
+    --font-title: var(--font-serif);
+    --font-body:  var(--font-sans);
+    --font-label: var(--font-sans);
+    --bg:       #f6f1e8;
+    --fg:       #1a1a1a;
+    --muted:    #767064;
+    --paper:    #fbf7ef;
+    --accent-1: #c8553d;
+    --accent-2: #e8a87c;
+    --accent-3: #3d5a4c;
+    --line:     rgba(26,26,26,0.16);
+    --line-soft:rgba(26,26,26,0.08);
+    --card:     rgba(255,255,255,0.45);
+    --scale: 1;
+  }
 
   section {
-    font-family: 'Noto Sans KR', system-ui, sans-serif;
-    font-size: 22pt;
-    padding: 56px 64px;
-    color: #1c1c1c;
-    line-height: 1.55;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    padding: var(--pad-y) var(--pad-x);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    justify-content: flex-start;
   }
-  section.lead {
-    text-align: center;
-    justify-content: center;
+  h1, h2, h3 { font-family: var(--font-title); font-weight: 400; letter-spacing: -0.01em; line-height: 1.05; margin: 0; text-wrap: balance; }
+  p { margin: 0; line-height: 1.45; text-wrap: pretty; }
+
+  /* eyebrow + title + subtitle + lede + body + small + numeral */
+  .eyebrow {
+    font-family: var(--font-label);
+    font-size: var(--type-eyebrow);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-1);
+    margin-bottom: var(--gap-tight);
   }
-  section.lead h1 { font-size: 56pt; margin-bottom: 0.25em; }
-  section.lead h2 { font-size: 36pt; margin-bottom: 0.4em; }
-  section.lead h4 { color: #777; font-weight: 400; font-size: 24pt; }
+  .title    { font-size: var(--type-title); font-family: var(--font-title); line-height: 1.04; max-width: 1500px; }
+  .subtitle { font-size: var(--type-subtitle); font-family: var(--font-title); font-style: italic; color: var(--muted); line-height: 1.15; margin-top: var(--gap-item); max-width: 1400px; }
+  .lede     { font-size: var(--type-lede); line-height: 1.3; max-width: 1500px; color: var(--fg); }
+  .body     { font-size: var(--type-body); line-height: 1.45; color: var(--fg); }
+  .small    { font-size: var(--type-small); color: var(--muted); line-height: 1.4; }
+  .numeral  { font-family: var(--font-title); font-size: var(--type-numeral); line-height: 0.9; letter-spacing: -0.04em; color: var(--accent-1); }
+  .spacer   { flex: 1; }
+  .annotation { /* placeholder so :root[data-density="minimal"] can target */ }
 
-  h1 { font-size: 34pt; margin-bottom: 0.5em; color: #1c1c1c; }
-  h2 { font-size: 28pt; margin-bottom: 0.4em; color: #1c1c1c; }
-  h3 { font-size: 22pt; color: #444; }
+  /* Slide variants */
+  section.section-slide { justify-content: center; }
+  section.section-slide .part-no    { font-family: var(--font-label); font-size: var(--type-eyebrow); letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent-1); margin-bottom: 36px; }
+  section.section-slide .part-title { font-family: var(--font-title); font-size: 120px; line-height: 1; letter-spacing: -0.02em; max-width: 1400px; }
+  section.section-slide .part-blurb { font-family: var(--font-title); font-style: italic; font-size: var(--type-subtitle); color: var(--muted); margin-top: 40px; max-width: 1200px; }
+  section.section-slide .part-rule  { width: 220px; height: 1px; background: var(--accent-1); margin-top: 56px; }
 
-  code, .mono { font-family: 'JetBrains Mono', monospace; font-size: 0.85em; }
-  em { color: #2c6ec9; font-style: normal; }
+  section.title-slide { justify-content: center; }
+  section.title-slide h1 { font-size: 140px; line-height: 0.98; letter-spacing: -0.025em; max-width: 1500px; }
+  section.title-slide .meta { font-family: var(--font-label); font-size: var(--type-small); letter-spacing: 0.06em; color: var(--muted); margin-top: 64px; display: flex; gap: 28px; align-items: baseline; }
+  section.title-slide .meta b { font-weight: 500; color: var(--fg); }
+  section.title-slide .ribbon { width: 220px; height: 1px; background: var(--accent-1); margin-bottom: 40px; }
 
-  .center { text-align: center; }
-  .small { font-size: 0.78em; color: #555; }
-  .muted { color: #777; }
+  section.hero-slide { justify-content: center; align-items: flex-start; }
+  section.hero-slide .hero-text { font-family: var(--font-title); font-size: 96px; line-height: 1.05; letter-spacing: -0.02em; max-width: 1600px; text-wrap: balance; }
+  section.hero-slide .hero-text em { color: var(--accent-1); font-style: italic; }
+  .h-eyebrow-block { margin-bottom: var(--gap-title); }
 
-  .callout {
-    border-left: 4px solid #2c6ec9;
-    padding: 12px 18px;
-    background: #f4f8ff;
-    font-style: italic;
-    color: #2c4a7a;
-    margin-top: 24px;
-  }
+  /* Layouts */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; flex: 1; min-height: 0; }
+  .col-head { font-family: var(--font-label); font-size: var(--type-eyebrow); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 24px; display: flex; align-items: center; gap: 14px; }
+  .col-head .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent-1); }
+  .col-head .dot.alt { background: var(--accent-3); }
 
-  .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
-  .cols-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-  .cols-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-  .cols-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  ol.steps, ul.bare { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--gap-item); }
+  ol.steps li { display: grid; grid-template-columns: 64px 1fr; gap: 20px; align-items: baseline; font-size: var(--type-body); line-height: 1.35; }
+  ol.steps li::before { counter-increment: step; content: counter(step, decimal-leading-zero); font-family: var(--font-label); font-size: var(--type-small); color: var(--accent-1); font-variant-numeric: tabular-nums; letter-spacing: 0.06em; }
+  ol.steps { counter-reset: step; }
 
-  .card {
-    border: 2px solid #e1e4e8;
-    border-radius: 8px;
-    padding: 16px;
-    background: #fafbfc;
-  }
-  .card.red { border-color: #c9302c; background: #fdf3f3; }
-  .card.blue { border-color: #2c6ec9; background: #f3f7fd; }
-  .card.green { border-color: #2c9c40; background: #f3fbf5; }
+  .card { background: var(--card); border: 1px solid var(--line-soft); border-radius: 8px; padding: 32px 36px; }
 
-  .role-box {
-    border: 2px solid #888;
-    border-radius: 6px;
-    padding: 12px 20px;
-    margin: 6px 0;
-    background: #fafafa;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.9em;
-  }
-  .role-box .role { font-weight: 700; color: #2c6ec9; }
+  /* SVG diagram helpers */
+  svg .stroke       { stroke: var(--fg); fill: none; }
+  svg .stroke-line  { stroke: var(--line); fill: none; }
+  svg .stroke-1     { stroke: var(--accent-1); fill: none; }
+  svg .stroke-3     { stroke: var(--accent-3); fill: none; }
+  svg .fill-1       { fill: var(--accent-1); }
+  svg .fill-2       { fill: var(--accent-2); }
+  svg .fill-3       { fill: var(--accent-3); }
+  svg .fill-paper   { fill: var(--paper); }
+  svg .fill-muted   { fill: var(--muted); }
+  svg .label        { font-family: var(--font-label); font-size: 26px; fill: var(--fg); }
+  svg .label-muted  { font-family: var(--font-label); font-size: 24px; fill: var(--muted); }
+  svg .label-title  { font-family: var(--font-title); font-size: 30px; fill: var(--fg); }
+  svg .label-accent { font-family: var(--font-label); font-size: 24px; fill: var(--accent-1); letter-spacing: 0.10em; text-transform: uppercase; }
+  svg .label-tiny   { font-family: var(--font-label); font-size: 24px; fill: var(--muted); letter-spacing: 0.06em; }
 
-  table { font-size: 0.78em; border-collapse: collapse; width: 100%; }
-  th, td { padding: 8px 12px; border-bottom: 1px solid #ddd; text-align: left; }
-  th { background: #f3f4f6; color: #444; }
+  /* Roadmap parts */
+  .parts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 28px; }
+  .part-cell { border-top: 2px solid var(--accent-1); padding-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+  .part-cell .pn { font-family: var(--font-label); font-size: 24px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent-1); }
+  .part-cell .pt { font-family: var(--font-title); font-size: 34px; line-height: 1.1; }
+  .part-cell .ps { font-family: var(--font-label); font-size: 24px; color: var(--muted); line-height: 1.4; }
 
-  ul, ol { line-height: 1.5; }
-  li { margin-bottom: 0.3em; }
+  /* Timeline */
+  .timeline { display: flex; align-items: flex-end; gap: 0; position: relative; padding-top: 100px; padding-bottom: 60px; }
+  .timeline::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line); }
+  .timeline .pt { flex: 1; text-align: center; position: relative; font-family: var(--font-label); font-size: 24px; line-height: 1.25; }
+  .timeline .pt::before { content: ""; position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; background: var(--accent-1); border-radius: 50%; transform: translate(-50%, -50%); border: 4px solid var(--bg); box-shadow: 0 0 0 1px var(--accent-1); }
+  .timeline .pt .date { position: absolute; left: 50%; transform: translateX(-50%); font-family: var(--font-label); font-size: 24px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .timeline .pt .lbl { position: absolute; left: 50%; transform: translateX(-50%); font-family: var(--font-title); font-size: 26px; white-space: nowrap; color: var(--fg); }
+  .timeline .pt.above .date { top: calc(50% + 18px); }
+  .timeline .pt.above .lbl  { bottom: calc(50% + 26px); }
+  .timeline .pt.below .date { bottom: calc(50% + 18px); }
+  .timeline .pt.below .lbl  { top: calc(50% + 26px); }
+  .timeline .pt.major::before { width: 22px; height: 22px; box-shadow: 0 0 0 1px var(--accent-1); }
+
+  /* Decision tree branches */
+  .branches { display: flex; flex-direction: column; gap: 18px; }
+  .branch { display: grid; grid-template-columns: 1.2fr 60px 1fr; gap: 24px; align-items: center; padding: 18px 0; border-bottom: 1px solid var(--line-soft); }
+  .branch .q { font-family: var(--font-serif); font-style: italic; font-size: 26px; color: var(--fg); line-height: 1.25; }
+  .branch .ar { text-align: center; color: var(--accent-1); font-family: var(--font-label); font-size: 24px; }
+  .branch .a { font-family: var(--font-label); font-size: 24px; color: var(--accent-1); line-height: 1.2; }
+
+  /* Layered protocol stack */
+  .layered { display: flex; flex-direction: column; gap: 14px; }
+  .layer { border: 1px solid var(--line); background: var(--paper); padding: 36px 40px; border-radius: 6px; display: flex; align-items: baseline; justify-content: space-between; gap: 24px; }
+  .layer .l-name { font-family: var(--font-title); font-size: 36px; }
+  .layer .l-sub { font-family: var(--font-label); font-size: var(--type-small); color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .layer.accent { border-color: var(--accent-1); }
+  .layer.accent .l-name { color: var(--accent-1); }
+  .protocol-arrow { text-align: center; font-family: var(--font-label); font-size: 24px; letter-spacing: 0.14em; color: var(--accent-1); text-transform: uppercase; padding: 6px 0; }
+
+  /* 4 standards row */
+  .standards-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+  .std-card { border: 1px solid var(--line); background: var(--paper); padding: 36px 32px; border-radius: 8px; display: flex; flex-direction: column; gap: 16px; }
+  .std-card .s-name { font-family: var(--font-title); font-size: 56px; line-height: 1; color: var(--accent-1); }
+  .std-card .s-tag { font-family: var(--font-label); font-size: 24px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .std-card .s-tagline { font-family: var(--font-serif); font-style: italic; font-size: 26px; line-height: 1.25; color: var(--fg); margin-top: auto; }
+  .std-card .s-date { font-family: var(--font-label); font-size: 24px; letter-spacing: 0.06em; color: var(--muted); }
+
+  /* Agent cards */
+  .agent-card { border-top: 1px solid var(--line); padding-top: 22px; display: flex; flex-direction: column; gap: 12px; }
+  .agent-card .a-name { font-family: var(--font-title); font-size: 40px; line-height: 1; }
+  .agent-card .a-maker { font-family: var(--font-label); font-size: 24px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .agent-card .a-quote { font-family: var(--font-serif); font-style: italic; font-size: 24px; color: var(--accent-1); line-height: 1.25; margin-top: 6px; }
+
+  /* Rifts grid */
+  .rifts { display: grid; grid-template-columns: 1fr 80px 1fr; row-gap: 24px; column-gap: 28px; align-items: center; font-size: 26px; }
+  .rifts .l { text-align: right; color: var(--fg); }
+  .rifts .r { text-align: left; color: var(--fg); }
+  .rifts .mid { font-family: var(--font-label); font-size: 24px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); text-align: center; }
+  .rifts .row-line { grid-column: 1 / -1; height: 1px; background: var(--line-soft); }
+
+  /* Universals checklist */
+  .checklist { display: grid; grid-template-columns: 1fr 1fr; gap: 24px 56px; }
+  .check-item { display: grid; grid-template-columns: 36px 1fr; align-items: baseline; gap: 18px; font-size: 28px; line-height: 1.3; padding-bottom: 22px; border-bottom: 1px solid var(--line-soft); }
+  .check-item .ck { color: var(--accent-1); font-family: var(--font-label); font-size: 24px; }
 ---
 
-<!-- _class: lead -->
+<!-- _class: title-slide -->
 
-# Modern AI Agents
+<div class="ribbon"></div>
 
-#### 역사, 구조, 그리고 editorial choices
+# <span>Modern</span> <span style="color:var(--accent-1);font-style:italic;">AI Agents</span>
 
-<br>
+<p class="subtitle"><span>어떻게 여기까지 왔고, 무엇이며,</span><br /><span>무엇을 두고 다투는가.</span></p>
 
-발표자 · 2026-05
+<div class="meta">
+  <span><b>60분 발표</b></span>
+  <span>·</span>
+  <span>입문자를 위한 기술 talk</span>
+  <span>·</span>
+  <span>2026년 5월</span>
+</div>
 
 <!--
 [발표 시 짚을 포인트]
-- 자기소개는 한 문장. 이 talk 자체가 credential 역할을 한다.
-- 시간: 35~40분. 질문은 마지막에 받는다.
-- 목표: 이 talk이 끝날 때 오늘날의 AI agents가 무엇이 다르고 어떻게 골라야 하는지 정리할 수 있다.
-- AI 사전 지식은 필요 없다. 용어는 진행하면서 정의한다.
-
-[전달 메모]
-- 초반은 천천히. 후반으로 갈수록 페이스를 올린다.
+- 안녕하세요. 약 60분 동안 함께 이야기 나눕니다.
+- 한 줄 약속: 끝나고 나면 오늘날의 AI agents가 왜 다른지, 그리고 그들 사이에서 어떻게 고를지 이해할 수 있게 됩니다.
+- 사전 AI 배경 지식은 필요 없습니다. 용어는 진행하면서 정의합니다.
+- Q&A는 마지막에.
 -->
 
 ---
 
-<!-- _class: lead -->
+<div class="eyebrow">30초 요약</div>
 
-## Agent의 역사 — 세 흐름의 수렴
+## <span class="title">세 갈래, 하나의 수렴.</span>
 
-```mermaid
-graph TD
-    T[Transformer<br/>2017] --> C[ChatGPT<br/>2022]
-    C --> Think["Learned to think<br/>CoT 2022 → ReAct 2022<br/>→ o1 2024 → R1 2025"]
-    C --> Act["Learned to act<br/>WebGPT 2021 → Toolformer 2023<br/>→ function calling 2023"]
-    C --> Coord["Learned to coordinate<br/>LangChain 2022 → AutoGPT 2023<br/>→ MCP 2024 → standards 2025"]
-    Think --> Today[Today's agents<br/>2026]
-    Act --> Today
-    Coord --> Today
-```
+<div class="spacer"></div>
+
+<svg viewBox="0 0 1680 660" style="width:100%;height:auto;max-height:640px;">
+  <!-- Trunk -->
+  <rect x="710" y="20" width="260" height="88" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+  <text x="840" y="56" text-anchor="middle" class="label-title">Transformer</text>
+  <text x="840" y="92" text-anchor="middle" class="label-tiny">2017</text>
+  <line x1="840" y1="108" x2="840" y2="148" class="stroke" stroke-width="1.5" />
+  <rect x="710" y="148" width="260" height="88" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+  <text x="840" y="184" text-anchor="middle" class="label-title">ChatGPT</text>
+  <text x="840" y="220" text-anchor="middle" class="label-tiny">NOV 2022</text>
+
+  <!-- Three diverging lines -->
+  <path d="M 840 236 C 840 270, 280 270, 280 300" class="stroke-1" stroke-width="1.5" fill="none" />
+  <path d="M 840 236 L 840 300" class="stroke-1" stroke-width="1.5" />
+  <path d="M 840 236 C 840 270, 1400 270, 1400 300" class="stroke-1" stroke-width="1.5" fill="none" />
+
+  <!-- Three branches -->
+  <text x="280" y="312" text-anchor="middle" class="label-accent">생각을 배웠다</text>
+  <rect x="80" y="332" width="400" height="200" rx="6" class="stroke fill-paper" stroke-width="1" />
+  <text x="280" y="372" text-anchor="middle" class="label-title">Reasoning</text>
+  <text x="280" y="408" text-anchor="middle" class="label-muted">CoT · Jan 2022</text>
+  <text x="280" y="436" text-anchor="middle" class="label-muted">ReAct · Oct 2022</text>
+  <text x="280" y="464" text-anchor="middle" class="label-muted">o1 · Sep 2024</text>
+  <text x="280" y="492" text-anchor="middle" class="label-muted">R1 · Jan 2025</text>
+
+  <text x="840" y="312" text-anchor="middle" class="label-accent">행동을 배웠다</text>
+  <rect x="640" y="332" width="400" height="200" rx="6" class="stroke fill-paper" stroke-width="1" />
+  <text x="840" y="372" text-anchor="middle" class="label-title">Tool use</text>
+  <text x="840" y="408" text-anchor="middle" class="label-muted">WebGPT · Dec 2021</text>
+  <text x="840" y="436" text-anchor="middle" class="label-muted">Toolformer · Feb 2023</text>
+  <text x="840" y="464" text-anchor="middle" class="label-muted">Function calling · Jun 2023</text>
+  <text x="840" y="492" text-anchor="middle" class="label-muted">MCP · Nov 2024</text>
+
+  <text x="1400" y="312" text-anchor="middle" class="label-accent">조율을 배웠다</text>
+  <rect x="1200" y="332" width="400" height="200" rx="6" class="stroke fill-paper" stroke-width="1" />
+  <text x="1400" y="372" text-anchor="middle" class="label-title">Orchestration</text>
+  <text x="1400" y="408" text-anchor="middle" class="label-muted">LangChain · Oct 2022</text>
+  <text x="1400" y="436" text-anchor="middle" class="label-muted">AutoGPT · Mar 2023</text>
+  <text x="1400" y="464" text-anchor="middle" class="label-muted">AGENTS.md · 2025</text>
+  <text x="1400" y="492" text-anchor="middle" class="label-muted">SKILL.md · 2025</text>
+
+  <!-- Converge -->
+  <path d="M 280 532 C 280 580, 840 580, 840 596" class="stroke-1" stroke-width="1.5" fill="none" />
+  <path d="M 840 532 L 840 596" class="stroke-1" stroke-width="1.5" />
+  <path d="M 1400 532 C 1400 580, 840 580, 840 596" class="stroke-1" stroke-width="1.5" fill="none" />
+  <rect x="640" y="596" width="400" height="56" rx="6" class="fill-1" />
+  <text x="840" y="630" text-anchor="middle" class="label-title" fill="var(--bg)" style="font-size:26px">오늘날의 agents · 2026</text>
+</svg>
 
 <!--
 [발표 시 짚을 포인트]
-- 오늘날의 agents는 단일 발명품이 아니다. 세 갈래가 병렬로 발전한 결과다.
-- 공통 기반은 두 가지다. Transformer architecture (2017)와 chat-model interface (ChatGPT, 2022).
-- 그 위에 세 갈래가 거의 동시에 자랐다.
-  - reasoning이 별도의 출력 channel로 발전 (CoT → ReAct → o1 → R1)
-  - tool use가 protocol로 표준화 (WebGPT → Toolformer → function calling)
-  - 그 둘을 묶는 framework가 등장하고, 이어 cross-vendor standards로 정착 (LangChain → AutoGPT → MCP → ACP/SKILL.md/AGENTS.md)
-- 세 흐름이 오늘날의 agents로 수렴한다.
-- 이 도식이 talk의 전체 구조를 나타낸다. 각 branch가 이후 한 section에 대응한다.
-
-[전달 메모]
-- diamond 모양인 이유를 짚는다. linear timeline으로 그리면 사실과 맞지 않는다. CoT (2022.01)는 ChatGPT (2022.11)보다 먼저, WebGPT (2021.12)는 그보다 더 먼저다. 세 갈래는 순차가 아니라 병렬이다.
+- AI agents는 단일 발명품이 아니다. 세 갈래가 병렬로 자라났다.
+- 공통 기반: Transformer (2017)와 chat-model interface (ChatGPT, 2022).
+- 그 위에서 reasoning, tool use, orchestration이 거의 동시에 발전 — 모두 오늘의 agents로 수렴.
+- 이 도식이 talk 전체의 roadmap. 각 branch가 한 section.
+- linear timeline으로 그리지 않는 이유: CoT (2022.01)는 ChatGPT (2022.11)보다 먼저였다.
 -->
 
 ---
 
-<!-- _class: lead -->
+<!-- _class: hero-slide -->
 
-## Thesis
+<div class="eyebrow h-eyebrow-block">핵심 주장</div>
 
-<br>
-
-> ### 2026의 AI agents는<br>**합의한 것이 더 많고**<br>**남은 차이는 *editorial*이다**
+<p class="hero-text">
+2026년의 AI agents는<br />
+서로 <em>합의한</em> 것이 더 많고,<br />
+<span style="color:var(--muted);font-style:italic;">남은 차이는 editorial이다.</span>
+</p>
 
 <!--
 [발표 시 짚을 포인트]
-- talk의 결론을 먼저 제시한다. 청중이 도착 지점을 알면 인지 부담이 줄어든다.
-- "editorial"의 의미: 각 project가 *무엇을 거부하는가*, *무엇을 표준화하는가*, *trust boundary를 어디에 긋는가*, *agent가 자기 자신을 수정해도 되는가*에 대한 선택.
-- architecture는 안정됐다. 남은 disagreement는 capability 차이가 아니라 선택 차이다.
-- 이 슬라이드부터 슬라이드 23까지의 모든 내용이 이 주장을 뒷받침한다.
-
-[전달 메모]
-- 지금 defense하지 않는다. 나머지 슬라이드가 defense다.
+- 결론을 먼저 제시한다. 청중이 어디로 가는지 알면 인지 부담이 줄어든다.
+- "editorial" 정의: 각 project가 무엇을 *거부*하고, 무엇을 *formalize*하고, *trust boundary*를 어디에 긋고, agent가 자기 자신을 수정해도 되는가.
+- Architecture는 settled. 남은 disagreement는 capability가 아니라 *취향*의 문제.
+- 이 슬라이드와 마지막 슬라이드 사이의 모든 내용이 이 주장을 뒷받침한다.
 -->
 
 ---
 
-# Completion에서 instruction으로
+<div class="eyebrow">전체 흐름</div>
 
-<div class="cols-2">
-<div class="card">
+## <span class="title">다섯 부분.</span>
 
-**~ 2020**
+<p class="subtitle">역사에서 canon까지, 대체로 시간순.</p>
 
-<br>
+<div class="spacer"></div>
 
-<div class="mono">"오늘 날씨는..."</div>
-
-<br>
-
-다음 단어를 예측하는<br>autocomplete 모델
-
+<div class="parts">
+  <div class="part-cell">
+    <div class="pn">Part I</div>
+    <div class="pt">어떻게 여기까지 왔는가</div>
+    <div class="ps">Completion engine에서 agent loop까지. 2017–2023.</div>
+  </div>
+  <div class="part-cell">
+    <div class="pn">Part II</div>
+    <div class="pt">조종과 modern toolkit</div>
+    <div class="ps">Steering, guardrail, 그리고 2024–2025에 도착한 네 가지 standards.</div>
+  </div>
+  <div class="part-cell">
+    <div class="pn">Part III</div>
+    <div class="pt">오늘날의 agents</div>
+    <div class="ps">다섯 project. 다섯 editorial 선택. 하나의 family tree.</div>
+  </div>
+  <div class="part-cell">
+    <div class="pn">Part IV</div>
+    <div class="pt">Patterns &amp; rifts</div>
+    <div class="ps">모두가 합의하는 것. 그래도 합의하지 못한 곳.</div>
+  </div>
+  <div class="part-cell">
+    <div class="pn">Part V</div>
+    <div class="pt">종합</div>
+    <div class="ps">Canonical shape. Picker. 2026의 floor.</div>
+  </div>
 </div>
-<div class="card blue">
 
-**2022 ~**
-
-<br>
-
-<div class="role-box">
-<span class="role">user:</span> 메일 정리해줘
-</div>
-<div class="role-box">
-<span class="role">assistant:</span> 어떤 기준으로?
-</div>
-
-<br>
-
-instruction을 받아 처리하는<br>chat 모델
-
-</div>
-</div>
-
-<div class="callout">
-scale + instruction tuning + RLHF — 2020~2022
-</div>
+<div class="spacer"></div>
 
 <!--
 [발표 시 짚을 포인트]
-- 2020년 이전의 language model은 다음 단어를 예측하는 autocomplete였다.
-- GPT-3 (2020)에서 한 가지가 확인됐다. scale이 충분히 커지면 같은 architecture가 자연어 instruction을 따른다.
-- 이 변화에는 세 가지가 작용했다.
-  - **scale** — parameter와 data 모두 한 자릿수 이상 증가
-  - **instruction tuning** — "instruction을 따르라"는 예시로 fine-tuning
-  - **RLHF** — 인간이 선호한 답을 reward로 학습
-- 변화의 본질은 architecture가 아니라 interface다. 모델 구조는 그대로, 사용자가 모델과 상호작용하는 방식이 달라졌다.
-- ChatGPT (2022.11.30)는 이 변화가 외부에 가시화된 시점이다.
-
-[전달 메모]
-- Transformer 내부 구조나 scaling law는 다루지 않는다. 이 슬라이드의 메시지는 하나다 — completion에서 instruction으로의 전환.
+- 전체 흐름의 지도. 다섯 부분.
+- 어떻게 여기까지 왔는지 → 그 위에 thought와 action이 어떻게 layer 됐는지 → agents가 어떻게 category가 됐는지 → 오늘의 toolkit → 마지막으로 오늘날의 project들과 거기서 무엇을 배울 수 있는지.
+- 역사는 빠르게, 현재 순간은 천천히.
+- 한 section만 기억하신다면, Part IV — patterns and rifts.
 -->
 
 ---
 
-# Chat model의 세 가지 role
+<!-- _class: section-slide -->
 
-<br>
+<div class="part-no">Part I</div>
 
-<div class="role-box">
-<span class="role">system:</span> 모델에게 주는 규칙 (사용자에게 보이지 않음)
+<h2 class="part-title">어떻게 여기까지 왔는가.</h2>
+
+<p class="part-blurb">Completion engine에서 agent loop까지.</p>
+
+<div class="part-rule"></div>
+
+---
+
+<div class="eyebrow">Model이 지시를 따르는 법을 배웠다</div>
+
+## <span class="title">단어 예측에서 대화로.</span>
+
+<div class="spacer" style="flex:0.6"></div>
+
+<div class="two-col" style="gap:60px;">
+  <div>
+    <div class="col-head"><span class="dot" style="background:var(--muted);"></span><span>이전 · 2018</span></div>
+    <div class="card" style="font-family:var(--font-mono);font-size:24px;line-height:1.6;">
+      <div style="color:var(--muted);font-size:24px;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:18px;">prompt</div>
+      <div>오늘 날씨는</div>
+      <div style="color:var(--accent-1);margin-top:14px;">→ 맑고 화창합니다. 기온은 약 18도이며…</div>
+      <div style="color:var(--muted);margin-top:22px;font-size:24px;font-style:italic;font-family:var(--font-serif);">다음 단어를 예측. 계속.</div>
+    </div>
+  </div>
+  <div>
+    <div class="col-head"><span class="dot"></span><span>이후 · 2022</span></div>
+    <div class="card" style="font-family:var(--font-mono);font-size:24px;line-height:1.6;">
+      <div style="color:var(--muted);font-size:24px;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:18px;">prompt</div>
+      <div>메일 정리해줘</div>
+      <div style="color:var(--accent-1);margin-top:14px;">→ 어떤 기준으로 정리할까요?</div>
+      <div style="color:var(--muted);margin-top:22px;font-size:24px;font-style:italic;font-family:var(--font-serif);">지시를 따른다. 답한다.</div>
+    </div>
+  </div>
 </div>
 
-<div class="role-box">
-<span class="role">user:</span> 사용자 입력
-</div>
+<div class="spacer" style="flex:0.4"></div>
 
-<div class="role-box">
-<span class="role">assistant:</span> 모델 응답
-</div>
-
-<br>
-
-<div class="callout">
-모든 chat model의 universal API — Claude, ChatGPT, Gemini, Llama 동일
-</div>
+<p class="small" style="text-align:center;">
+<span style="color:var(--accent-1);font-family:var(--font-label);letter-spacing:.08em;text-transform:uppercase;">+ scale&nbsp;&nbsp;·&nbsp;&nbsp;+ instruction tuning&nbsp;&nbsp;·&nbsp;&nbsp;+ RLHF</span>
+</p>
 
 <!--
 [발표 시 짚을 포인트]
-- 모든 chat-tuned model이 동일한 세 가지 role을 사용한다. universal API다.
-- **system** — 사용자에게 보이지 않는 instruction (규칙, persona).
-- **user** — 사용자 입력.
-- **assistant** — 모델 응답.
-- OpenAI ChatGPT API (2023.03)에서 처음 도입된 format이 Anthropic, Google, Meta, Mistral, 그리고 모든 open-weight chat template로 확산됐다.
-- 이후 talk에서 다루는 tool use, reasoning, agents는 모두 이 세 role frame 안에서 일어난다.
-
-[전달 메모]
-- 여기가 vocabulary checkpoint다. 이 슬라이드 이후로는 "system prompt", "tool message" 같은 용어를 별도 설명 없이 사용한다.
+- 2020년 이전, language model은 정교한 autocomplete였다. 다음 단어를 예측하는 일.
+- GPT-3 (2020)가 한 가지를 보여줬다 — scale이 충분하면 같은 machinery가 자연어 instruction을 따른다.
+- 세 ingredient: scale, instruction tuning, RLHF.
+- Breakthrough는 architecture가 아니라 *interface*. 모델의 모양은 그대로, 우리가 대화하는 방식이 바뀌었다.
+- 2022.11.30 ChatGPT가 이것을 모두에게 보이게 만들었다.
 -->
 
 ---
 
-# Reasoning이 별도 output channel이 되다
+<div class="eyebrow">Chat model이란</div>
 
-```mermaid
-graph LR
-    A["Worked-example prompt<br/>(Wei, Jan 2022)<br/>Chain-of-Thought"]
-    B["'Let's think step by step'<br/>(Kojima, May 2022)<br/>zero-shot CoT"]
-    C["Trained reasoning models<br/>o1 (Sep 2024)<br/>R1 (Jan 2025)<br/>Claude extended thinking<br/>(Feb 2025)"]
-    A --> B
-    B --> C
-```
+## <span class="title">모든 chat model의 세 가지 role.</span>
 
-<div class="callout">
-final answer와 thinking trace가 분리된 두 channel로 출력된다
+<div class="spacer" style="flex:0.5"></div>
+
+<div style="display:grid;grid-template-columns:1fr 1.2fr;gap:80px;align-items:center;">
+  <svg viewBox="0 0 640 480" style="width:100%;height:auto;">
+    <rect x="20" y="20" width="600" height="124" rx="8" class="stroke fill-paper" stroke-width="1.5" />
+    <text x="50" y="58" class="label-accent">system</text>
+    <text x="50" y="102" class="label" style="font-size:26px;">model에게 주는 규칙</text>
+    <text x="50" y="132" class="label-muted">(사용자에게는 보이지 않음)</text>
+    <rect x="20" y="164" width="600" height="124" rx="8" class="stroke fill-paper" stroke-width="1.5" />
+    <text x="50" y="202" class="label-accent">user</text>
+    <text x="50" y="246" class="label" style="font-size:26px;">사용자가 입력하는 것</text>
+    <rect x="20" y="308" width="600" height="124" rx="8" class="fill-1" />
+    <text x="50" y="346" class="label-accent" style="fill:var(--bg);">assistant</text>
+    <text x="50" y="390" class="label" style="font-size:26px;fill:var(--bg);">model이 답하는 것</text>
+  </svg>
+  <div>
+    <p class="lede" style="margin-bottom:32px;">Universal API.</p>
+    <p class="body" style="color:var(--muted);max-width:600px;">
+      OpenAI가 2023년 3월에 도입.
+      Anthropic, Google, Meta, Mistral, 모든 open-weight chat template이 채택했다.
+      한 format, 모든 vendor.
+    </p>
+    <p class="body" style="margin-top:32px;color:var(--accent-3);font-family:var(--font-serif);font-style:italic;">
+      이후의 모든 capability — tool, reasoning, agents — 가 이 세 role frame 안에 있다.
+    </p>
+  </div>
 </div>
+
+<div class="spacer"></div>
 
 <!--
 [발표 시 짚을 포인트]
-- reasoning 능력의 발전은 두 단계로 정리된다.
-- **1단계: prompt 기법.** Wei et al. (2022.01)이 worked-example 방식 (Chain-of-Thought)을 제안했다. prompt에 reasoning 예시를 포함하면 모델이 같은 형식으로 응답하면서 math/logic 성능이 향상된다. Kojima et al. (2022.05)은 더 단순한 방법을 보였다. "Let's think step by step"만 추가해도 zero-shot으로 같은 효과가 난다.
-- **2단계: trained capability.** 2024.09 OpenAI o1이 reinforcement learning으로 긴 internal reasoning을 학습한 첫 모델이다. 2025.01 DeepSeek-R1이 open-weights로 동급 성능을 재현했다. 2025.02 Claude가 extended thinking mode를 추가했다.
-- 결과: reasoning이 별도의 output channel로 분리됐다. 현대 모델은 thinking trace와 final answer를 별개로 출력하며, 각각의 비용과 용도가 다르다.
-- 메커니즘: 중간 token이 forward pass에 추가 compute를 제공하고, context window를 working memory처럼 사용하게 한다.
-
-[전달 메모]
-- "reasoning"이 새로운 종류의 지능이 아니라, 같은 모델이 어려운 문제에 더 많은 compute를 할당하는 방식임을 강조한다.
+- 모든 chat-tuned model — Claude, GPT, Gemini, Llama, 모든 open-weight chat template까지 — 가 같은 세 message role을 쓴다.
+- system: 보이지 않는 규칙. user: 사람이 입력. assistant: model이 답한다.
+- 2023.03 OpenAI에서 시작, 모든 vendor가 채택. universal API.
+- 이 talk의 나머지가 모두 이 세 role frame 안에서 일어난다.
 -->
 
 ---
 
-# Tool use — 외부 환경 호출
+<div class="eyebrow">Model이 "생각"을 배웠다</div>
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant Model
-    participant Harness
-    participant Tool
-    User->>Model: SF 날씨 어때?
-    Model->>Harness: call get_weather(city="SF")
-    Harness->>Tool: execute
-    Tool-->>Harness: 62°F, foggy
-    Harness->>Model: tool result
-    Model->>User: SF는 62°F, 안개가 있음
-```
+## <span class="title">Reasoning이 별도 channel이 되었다.</span>
 
-<div class="callout">
-Function calling — OpenAI, 2023.06.13
-</div>
+<div class="spacer" style="flex:0.5"></div>
+
+<svg viewBox="0 0 1680 360" style="width:100%;height:auto;">
+  <rect x="40"   y="60" width="440" height="200" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+  <text x="260" y="106" text-anchor="middle" class="label-accent">Stage 1 · prompt trick</text>
+  <text x="260" y="156" text-anchor="middle" class="label-title">Chain of Thought</text>
+  <text x="260" y="198" text-anchor="middle" class="label-muted" style="font-family:var(--font-serif);font-style:italic;font-size:26px;">"Let's think step by step."</text>
+  <text x="260" y="230" text-anchor="middle" class="label-tiny">Wei · Kojima · 2022</text>
+  <line x1="500" y1="160" x2="600" y2="160" class="stroke-1" stroke-width="1.5" />
+  <path d="M 590 154 L 600 160 L 590 166" class="stroke-1" stroke-width="1.5" fill="none" />
+  <rect x="620" y="60" width="440" height="200" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+  <text x="840" y="106" text-anchor="middle" class="label-accent">Stage 2 · trained capability</text>
+  <text x="840" y="156" text-anchor="middle" class="label-title">Trained reasoners</text>
+  <text x="840" y="198" text-anchor="middle" class="label-muted">o1 · R1 · Claude extended thinking</text>
+  <text x="840" y="230" text-anchor="middle" class="label-tiny">2024.09 — 2025.02</text>
+  <line x1="1080" y1="160" x2="1180" y2="160" class="stroke-1" stroke-width="1.5" />
+  <path d="M 1170 154 L 1180 160 L 1170 166" class="stroke-1" stroke-width="1.5" fill="none" />
+  <rect x="1200" y="60" width="440" height="200" rx="6" class="fill-1" />
+  <text x="1420" y="106" text-anchor="middle" class="label-accent" style="fill:var(--bg)">오늘</text>
+  <text x="1420" y="156" text-anchor="middle" class="label-title" style="fill:var(--bg)">Thinking + Answer</text>
+  <text x="1420" y="198" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;opacity:.85;">두 개의 output channel</text>
+  <text x="1420" y="230" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;opacity:.65;letter-spacing:.06em;">PRIVATE TRACE · PUBLIC REPLY</text>
+</svg>
+
+<div class="spacer" style="flex:0.5"></div>
+
+<p class="body" style="color:var(--muted);max-width:1300px;font-family:var(--font-serif);font-style:italic;">
+더 많은 token = 문제당 더 많은 compute. 중간 "thoughts"가 forward pass에 공간을 준다.
+</p>
 
 <!--
 [발표 시 짚을 포인트]
-- 흐름은 다음과 같다. 사용자가 질문하면, 모델이 structured tool call을 출력한다 (자유 텍스트가 아니라 JSON 형식의 request). harness가 실행하고, 결과를 받아, 모델이 final answer를 생성한다.
-- 결정적 시점: 2023.06.13 — OpenAI가 function calling을 공식 API로 제공한 날.
-- 그 이전에는 prompt에 "JSON 형식으로 출력"을 명시하고 모델 출력을 파싱했다. 그 이후로는 모델이 tool call을 별도 API field로 출력하도록 학습되어 있다.
-- Anthropic이 2023.11 beta로 도입하고 2024.05 GA, Google이 2024년에 합류했다. 2024년 말에는 모든 frontier API가 function calling을 지원한다.
-- tool이 정의되면 모델은 shell, browser, file editor, database, 임의의 API 등 외부 시스템을 호출할 수 있다.
-- 이 cycle — model call → harness execute → result return — 이 modern agent의 기본 단위다.
-
-[전달 메모]
-- "agent loop"이라는 용어는 아직 사용하지 않는다. 다음 슬라이드에서 cyclical 구조로 확장한다.
+- Reasoning은 마법처럼 들리지만, 이야기는 두 단계로 짧다.
+- Stage 1: prompt trick. 2022년 초, Wei와 Kojima가 prompt에 reasoning example을 넣으면 model이 그 style을 imitate한다는 걸 발견. "Let's think step by step"만 붙여도 zero-shot.
+- Stage 2: training. 2024.09 OpenAI o1, 2025.01 DeepSeek R1, 2025.02 Claude extended thinking — 명시적으로 학습된 reasoning model.
+- 결과: reasoning이 별도 output channel이 됐다. private trace + public reply.
+- 메커니즘: 더 많은 token = 문제당 더 많은 compute. 중간 thinking이 forward pass에 공간을 준다.
 -->
 
 ---
 
-# Agent loop — think · act · observe
+<div class="eyebrow">Model이 "행동"을 배웠다</div>
 
-```mermaid
-graph TD
-    Think[Think] --> Act[Act]
-    Act --> Observe[Observe]
-    Observe --> Think
-```
+## <span class="title">Protocol로서의 tool use.</span>
 
-<div class="callout">
-ReAct — Reasoning + Acting interleaved (Yao 2022)<br>
-한 cycle = 한 번의 model call
-</div>
+<div class="spacer" style="flex:0.3"></div>
+
+<svg viewBox="0 0 1680 520" style="width:100%;height:auto;max-height:540px;">
+  <!-- Lifelines -->
+  <g class="stroke-line" stroke-width="1" stroke-dasharray="3 6">
+    <line x1="240"  y1="80" x2="240"  y2="500" />
+    <line x1="840"  y1="80" x2="840"  y2="500" />
+    <line x1="1440" y1="80" x2="1440" y2="500" />
+  </g>
+  <!-- Lane heads -->
+  <rect x="140"  y="36" width="200" height="56" rx="4" class="fill-paper stroke" stroke-width="1.5" />
+  <text x="240"  y="72" text-anchor="middle" class="label-title" style="font-size:26px">사용자</text>
+  <rect x="740"  y="36" width="200" height="56" rx="4" class="fill-1" />
+  <text x="840"  y="72" text-anchor="middle" class="label-title" style="font-size:26px;fill:var(--bg)">Model</text>
+  <rect x="1340" y="36" width="200" height="56" rx="4" class="fill-paper stroke-3" stroke-width="2" />
+  <text x="1440" y="72" text-anchor="middle" class="label-title" style="font-size:26px;fill:var(--accent-3)">Tool</text>
+  <!-- Step 1 -->
+  <line x1="240" y1="140" x2="836" y2="140" class="stroke" stroke-width="1.5" />
+  <path d="M 830 134 L 840 140 L 830 146" class="stroke" stroke-width="1.5" fill="none" />
+  <text x="540" y="128" text-anchor="middle" class="label" style="font-style:italic;font-family:var(--font-serif);font-size:26px">"SF 날씨 어때?"</text>
+  <!-- Step 2 -->
+  <line x1="840" y1="220" x2="1436" y2="220" class="stroke-1" stroke-width="2" />
+  <path d="M 1430 214 L 1440 220 L 1430 226" class="stroke-1" stroke-width="2" fill="none" />
+  <text x="1140" y="208" text-anchor="middle" class="label" style="font-family:var(--font-mono);font-size:24px;fill:var(--accent-1)">get_weather(city: "SF")</text>
+  <text x="1140" y="244" text-anchor="middle" class="label-tiny">structured tool call · free text 아님</text>
+  <!-- Step 3 -->
+  <line x1="1440" y1="320" x2="844" y2="320" class="stroke-3" stroke-width="2" />
+  <path d="M 850 314 L 840 320 L 850 326" class="stroke-3" stroke-width="2" fill="none" />
+  <text x="1140" y="308" text-anchor="middle" class="label" style="font-family:var(--font-mono);font-size:24px;fill:var(--accent-3)">{ temp: 62, conditions: "foggy" }</text>
+  <!-- Step 4 -->
+  <line x1="840" y1="420" x2="244" y2="420" class="stroke" stroke-width="1.5" />
+  <path d="M 250 414 L 240 420 L 250 426" class="stroke" stroke-width="1.5" fill="none" />
+  <text x="540" y="408" text-anchor="middle" class="label" style="font-style:italic;font-family:var(--font-serif);font-size:26px">"SF는 62°F에 안개가 있어요."</text>
+  <!-- Step numbers -->
+  <circle cx="60" cy="140" r="22" class="fill-1" />
+  <text x="60" y="146" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;font-weight:600;">1</text>
+  <circle cx="60" cy="220" r="22" class="fill-1" />
+  <text x="60" y="226" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;font-weight:600;">2</text>
+  <circle cx="60" cy="320" r="22" class="fill-1" />
+  <text x="60" y="326" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;font-weight:600;">3</text>
+  <circle cx="60" cy="420" r="22" class="fill-1" />
+  <text x="60" y="426" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;font-weight:600;">4</text>
+</svg>
+
+<div class="spacer"></div>
+
+<p class="small" style="text-align:center;">
+<span style="color:var(--accent-1);font-family:var(--font-label);letter-spacing:.08em;text-transform:uppercase;">function calling · OpenAI · 2023년 6월 13일</span>
+</p>
 
 <!--
 [발표 시 짚을 포인트]
-- 슬라이드 6 (think)과 슬라이드 7 (act)을 결합한 형태다. 모델이 추론하고, 행동하고, 결과를 관찰하고, 다시 추론한다. task가 완료될 때까지 반복한다.
-- 이 loop의 이름은 ReAct (Reasoning + Acting)이다. Yao et al. (2022, Princeton/Google)이 도입했다.
-- 한 cycle = model call 한 번. harness가 loop을 제어하고, 모델이 종료 시점을 결정한다.
-- 이 구조가 모든 modern AI agent의 기본 형태다 — Claude Code, Cursor, ChatGPT with tools, AutoGPT, 모든 framework가 이 loop을 변형해서 사용한다.
-- 이후 슬라이드는 이 loop을 구현 (9-14), 특성화 (17-19), 또는 configure (20-22)하는 내용이다.
-
-[전달 메모]
-- 이 도식을 청중이 기억하도록 한다. 이후 모든 슬라이드에 이 구조가 등장한다.
+- 사용자가 질문 → model이 *structured* tool call을 emit (free text가 아니라 JSON 형태 request) → harness가 실행 → 결과 반환 → model이 final answer.
+- 결정적 날짜: 2023.06.13 — OpenAI가 function calling을 ship한 날.
+- 그 전에는 "JSON 형식으로 출력" 부탁하고 기도. 그 후에는 model이 별도 API field로 학습된 채로 emit.
+- Anthropic 따라옴 (2023.11 beta → 2024.05 GA), Google 합류 2024년. 2024 말 table stakes.
+- tool이 작동하면 model은 거의 무엇이든 쓸 수 있다.
 -->
 
 ---
 
-# 2023 — orchestration wave
+<div class="eyebrow">Think + Act + Observe</div>
 
-<div class="cols-2">
-<div>
+## <span class="title">Agent loop.</span>
 
-**Timeline**
+<div class="spacer" style="flex:0.3"></div>
 
-- **2022.10** — LangChain
-- **2022.11** — ChatGPT
-- **2023.03.30** — AutoGPT *(13일 30K stars, 4월 말 100K)*
-- **2023.04.03** — BabyAGI
-- **2023.08** — AutoGen, MetaGPT
-- **2024.01** — CrewAI
-- **2024.11.25** — MCP
-
+<div style="display:grid;grid-template-columns:1.1fr 1fr;gap:80px;align-items:center;">
+  <svg viewBox="0 0 720 540" style="width:100%;height:auto;">
+    <circle cx="360" cy="270" r="200" class="stroke-line" stroke-width="1.5" fill="none" />
+    <!-- Think (top) -->
+    <circle cx="360" cy="70" r="74" class="fill-1" />
+    <text x="360" y="64" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-title);font-size:30px;">Think</text>
+    <text x="360" y="92" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;letter-spacing:.06em;text-transform:uppercase;opacity:.8;">model</text>
+    <!-- Act (bottom-right) -->
+    <circle cx="533" cy="370" r="74" class="fill-3" />
+    <text x="533" y="364" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-title);font-size:30px;">Act</text>
+    <text x="533" y="392" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;letter-spacing:.06em;text-transform:uppercase;opacity:.8;">tool call</text>
+    <!-- Observe (bottom-left) -->
+    <circle cx="187" cy="370" r="74" class="fill-2" />
+    <text x="187" y="364" text-anchor="middle" style="fill:var(--fg);font-family:var(--font-title);font-size:30px;">Observe</text>
+    <text x="187" y="392" text-anchor="middle" style="fill:var(--fg);font-family:var(--font-label);font-size:24px;letter-spacing:.06em;text-transform:uppercase;opacity:.75;">result</text>
+    <!-- Ring arrows -->
+    <g class="stroke" stroke-width="2" fill="none">
+      <path d="M 432 110 A 200 200 0 0 1 503 304" />
+      <path d="M 497 296 L 503 304 L 510 296" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M 458 408 A 200 200 0 0 1 262 408" />
+      <path d="M 270 414 L 262 408 L 272 400" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M 217 304 A 200 200 0 0 1 288 110" />
+      <path d="M 286 118 L 288 110 L 296 116" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </svg>
+  <div>
+    <p class="lede" style="margin-bottom:32px;">한 바퀴 = 한 번의 model call.</p>
+    <p class="body" style="color:var(--muted);max-width:600px;margin-bottom:28px;">
+      Model이 생각한다. Harness가 tool을 실행한다. 결과가 돌아온다. Model이 다시 생각한다. 끝날 때까지 반복.
+    </p>
+    <p class="body" style="font-family:var(--font-serif);font-style:italic;color:var(--accent-3);">
+      모든 modern agent의 spine. Claude Code, Cursor, AutoGPT, 모든 framework. Surface는 달라도 loop은 같다.
+    </p>
+    <p class="small" style="margin-top:36px;color:var(--accent-1);font-family:var(--font-label);letter-spacing:.08em;text-transform:uppercase;">
+      ReAct &mdash; Yao et al. &mdash; Oct 2022
+    </p>
+  </div>
 </div>
-<div class="card">
 
-연구 paper에서 product category까지<br>**약 5~6개월**
-
-<br>
-
-AutoGPT 이후 "AI agent"가 비전문가에게도 알려진 용어로 자리잡음
-
-<br>
-
-다만 신뢰성은 낮았고, 2023년 가을에는 *trough of disillusionment*로 평가가 전환
-
-</div>
-</div>
+<div class="spacer"></div>
 
 <!--
 [발표 시 짚을 포인트]
-- agent loop이 연구 diagram에서 product category로 자리잡기까지 약 5~6개월이 걸렸다. ReAct paper (2022.10) → AutoGPT (2023.03).
-- **LangChain** (Harrison Chase, 2022.10.24)이 첫 번째 widely-used orchestration framework다. ChatGPT 한 달 전 출시됐고, ChatGPT 이후 빠르게 성장했다.
-- **AutoGPT** (Toran Bruce Richards, 2023.03.30)는 목표, memory, browsing, file editing을 갖춘 autonomous agent다. 13일 만에 GitHub star 30K, 4월 말 100K — 당시 가장 빠른 OSS 성장 속도.
-- 이 시점부터 "AI agent"라는 용어가 비전문가에게도 통용된다.
-- 이어 **BabyAGI** (2023.04.03), **AutoGen** (Microsoft, 2023.08), **MetaGPT** (2023.08), **CrewAI** (2024.01) 등 multi-agent framework가 layer로 추가됐다.
-- 실제 동작 면에서는 한계가 명확했다. loop이 중복되고, hallucination이 누적되고, token 비용이 높았다. 2023년 가을 무렵 평가가 hype에서 *trough of disillusionment*로 전환됐다.
-
-[전달 메모]
-- AutoGPT의 기여는 technical보다 cultural이다 — agent의 *형태*를 대중에게 가시화했다. 신뢰성 개선은 이후 2년에 걸쳐 진행됐다 (모델 성능, tool API, MCP).
+- 앞 두 슬라이드의 think와 act를 합친다. Model이 생각, 행동, 관찰, 다시 생각. Task 끝까지 반복.
+- 이름: ReAct (Reasoning + Acting). 2022.10 Yao et al., Princeton/Google.
+- 한 바퀴 = model call 한 번. Harness가 loop을 돌리고 model이 멈출 시점을 결정.
+- 모든 modern agent의 spine. Surface는 달라도 loop은 같다.
+- 이후 모든 슬라이드에 이 모양이 나온다.
 -->
 
 ---
 
-# Wave에서 남은 lesson
+<div class="eyebrow">Orchestration framework wave</div>
 
-<div class="cols-2">
-<div class="card">
+## <span class="title">2023 &mdash; agents가 viral해졌다.</span>
 
-**12-Factor Agents**
+<div class="spacer" style="flex:0.4"></div>
 
-- Own your prompts
-- Own your context
-- Own your control flow
-
-<br>
-
-framework 추상화 뒤에 숨기지 않는다
-
+<div class="timeline">
+  <div class="pt above"><span class="lbl">LangChain</span><span class="date">2022.10</span></div>
+  <div class="pt below"><span class="lbl">ChatGPT</span><span class="date">2022.11</span></div>
+  <div class="pt above major"><span class="lbl">AutoGPT</span><span class="date">2023.03</span></div>
+  <div class="pt below"><span class="lbl">BabyAGI</span><span class="date">2023.04</span></div>
+  <div class="pt above"><span class="lbl">AutoGen</span><span class="date">2023.08</span></div>
+  <div class="pt below"><span class="lbl">CrewAI</span><span class="date">2024.01</span></div>
+  <div class="pt above major"><span class="lbl">MCP</span><span class="date">2024.11</span></div>
 </div>
-<div class="card blue">
 
-**MCP의 정착**
+<div class="spacer" style="flex:0.4"></div>
 
-<br>
-
-framework war는<br>**orchestration이 아니라**<br>**integration의 표준화**로 정리된다
-
-<br>
-
-— 2024.11
-
-</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:32px;">
+  <div>
+    <div class="numeral" style="font-size:120px;">100K</div>
+    <p class="small">2023년 4월 말 AutoGPT의 GitHub stars &mdash; release 후 몇 주.</p>
+  </div>
+  <div style="align-self:end;">
+    <p class="body" style="color:var(--muted);font-family:var(--font-serif);font-style:italic;">
+      연구 paper에서 product category까지 6개월. 대부분의 demo는 cherry-picked였지만, agent의 <em>모양</em>이 전 세계 청중에게 도달했다.
+    </p>
+  </div>
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- 2023년에 등장한 orchestration framework들 (LangChain, AutoGen, CrewAI, MetaGPT)에 대한 2024년의 일반적 평가는 다음과 같다. 추상화가 과도하고, orchestration layer는 문제의 작은 부분에 해당한다.
-- 12-Factor Agents 학파가 정리한 production wisdom:
-  - **Own your prompts** — framework 뒤에 prompt를 숨기지 않는다
-  - **Own your context** — context window에 무엇이 들어갈지 직접 결정한다
-  - **Own your control flow** — loop은 직접 구현한다
-- framework war는 orchestration layer가 작고 integration layer가 크다는 합의로 종료된다. MCP (2024.11)가 표준화한 것은 후자다 — agent와 tool의 연결 방식.
-- framework 자체보다 framework가 정립한 **mental model** (agent = loop + tools + memory + objective)이 남았다.
-
-[전달 메모]
-- LangChain 학습이 agents 이해의 전제조건은 아니다. pattern은 library 위 layer에 존재한다.
+- ReAct paper (2022.10) → AutoGPT (2023.03)까지 약 5개월.
+- LangChain 2022.10, ChatGPT 2022.11, AutoGPT 2023.03.30 — 13일 만에 30K stars, 4월 말 100K. 당시 가장 빠른 OSS 성장.
+- 이때 "AI agent"가 CEO도 아는 noun이 됐다.
+- 이어 BabyAGI, AutoGen, MetaGPT, CrewAI 등 wave.
+- 솔직히, 대부분 demo는 cherry-picked. 실제 run은 loop에 갇히고 hallucinate. 2023 가을, 분위기 disillusionment로 뒤집힘.
 -->
 
 ---
 
-# 모델 행동을 통제하는 두 축
+<div class="eyebrow">Wave 이후</div>
 
-<div class="cols-2">
-<div class="card red">
+## <span class="title">Framework 대신, discipline.</span>
 
-### Constrain
-원치 않는 행동을 차단
+<div class="spacer" style="flex:0.4"></div>
 
-<br>
-
-- refuse / content filters
-- sandbox
-- permission prompts
-
-</div>
-<div class="card blue">
-
-### Steer
-원하는 방향으로 유도
-
-<br>
-
-- system prompt (role pinning)
-- structured output
-- tool-registry trimming
-- verdict contract
-
-</div>
+<div class="two-col">
+  <div>
+    <div class="col-head"><span class="dot"></span><span>남은 것</span></div>
+    <ol class="steps" style="margin-top:18px;">
+      <li><span><b style="font-family:var(--font-title);font-size:40px;">Own your prompts.</b><br /><span style="color:var(--muted);font-size:24px;">읽을 수 없는 abstraction 뒤에 숨기지 마라.</span></span></li>
+      <li><span><b style="font-family:var(--font-title);font-size:40px;">Own your context.</b><br /><span style="color:var(--muted);font-size:24px;">매 turn 무엇이 window에 들어갈지 직접 결정하라.</span></span></li>
+      <li><span><b style="font-family:var(--font-title);font-size:40px;">Own your control flow.</b><br /><span style="color:var(--muted);font-size:24px;">Loop는 직접 써라 &mdash; loop는 작다.</span></span></li>
+    </ol>
+  </div>
+  <div style="align-self:center;">
+    <div class="col-head"><span class="dot alt"></span><span>전쟁이 끝난 방식</span></div>
+    <p class="lede" style="margin-top:18px;font-family:var(--font-serif);font-style:italic;line-height:1.25;">
+      모두가 <span style="color:var(--accent-1);">orchestration</span> layer는 작고,
+      <span style="color:var(--accent-1);">integration</span> layer는 거대하다는 데 동의했다.
+    </p>
+    <p class="body" style="margin-top:36px;color:var(--muted);">
+      MCP가 2024년 11월에 integration layer를 standardize했다.
+      Framework 자체는 후퇴했다.
+    </p>
+  </div>
 </div>
 
-<div class="callout">
-규칙을 prompt로 부탁하지 않고, 위반할 capability 자체를 제거한다
-</div>
+<div class="spacer"></div>
 
 <!--
 [발표 시 짚을 포인트]
-- 모델을 task에 집중시키고 unwanted behavior로부터 보호하는 두 가지 축이 있다.
-- **Constrain** (negative axis) — 원치 않는 행동을 막는다. refusal training, output filter, sandbox, 위험한 action 전의 permission prompt.
-- **Steer** (positive axis) — 정해진 purpose 쪽으로 유도한다. system prompt (role definition), structured output (JSON schema enforcement), tool denylist (위험한 tool을 registry에서 제거), verdict contract ("PASS/FAIL로 종료").
-- 최근의 design 경향: prompt로 규칙을 명시하는 대신 모델이 위반할 capability 자체를 제거한다. 예를 들어 Claude Code의 read-only reviewer subagent에는 `Edit` tool이 등록되지 않는다. 규칙이 prompt 한 줄이 아니라 부재한 capability로 enforce된다.
-- 두 축의 역할 분담: sandbox는 외부 시스템을 모델로부터 보호하고, structural denylist는 task가 의도된 범위를 벗어나지 않도록 한다.
-
-[전달 메모]
-- 이 슬라이드에서 전달할 핵심 design idea — purpose는 prompt 문구가 아니라 모델이 가진 tool set으로 enforce된다.
+- 2024년이 되자 consensus: framework들이 over-abstracted, orchestration layer가 사실 문제의 가장 작은 부분.
+- 12-Factor Agents 학파의 wisdom:
+  - Own your prompts (abstraction 뒤에 숨기지 말 것)
+  - Own your context (window 직접 결정)
+  - Own your control flow (loop 직접 쓰기)
+- Framework wars는 orchestration layer가 작고 integration layer가 크다는 데 모두 동의하면서 끝났다.
+- MCP가 2024.11에 integration layer를 standardize.
+- Framework era에서 남은 것은 mental model.
 -->
 
 ---
 
-# 2024-2025, cross-vendor standards
+<!-- _class: section-slide -->
 
-<div class="cols-4">
-<div class="card blue">
+<div class="part-no">Part II</div>
 
-**MCP**
-*tool bridge*
+<h2 class="part-title">조종과 modern toolkit.</h2>
 
-<br>
+<p class="part-blurb">Steering, guardrails, 그리고 12개월 안에 도착한 네 가지 standards.</p>
 
-Anthropic<br>
-2024.11.25
+<div class="part-rule"></div>
 
-</div>
-<div class="card blue">
+---
 
-**AGENTS.md**
-*project context*
+<div class="eyebrow">Steering &amp; guardrailing</div>
 
-<br>
+## <span class="title">Model을 조종하는 두 축.</span>
 
-OpenAI Codex CLI<br>
-2025 중반
+<div class="spacer" style="flex:0.4"></div>
 
-</div>
-<div class="card blue">
-
-**ACP**
-*editor bridge*
-
-<br>
-
-Zed<br>
-2025.08.27
-
-</div>
-<div class="card blue">
-
-**SKILL.md**
-*capability artifact*
-
-<br>
-
-Anthropic<br>
-2025.10.16
-
-</div>
+<div class="two-col">
+  <div>
+    <div class="col-head" style="color:var(--accent-1);">
+      <span class="dot"></span><span>Constrain &mdash; 못 하게 막는다</span>
+    </div>
+    <ul class="bare" style="margin-top:18px;font-size:28px;line-height:1.5;">
+      <li style="border-bottom:1px solid var(--line-soft);padding:18px 0;">Refusal training</li>
+      <li style="border-bottom:1px solid var(--line-soft);padding:18px 0;">Output filters</li>
+      <li style="border-bottom:1px solid var(--line-soft);padding:18px 0;">Sandbox &mdash; 세계가 read-only</li>
+      <li style="padding:18px 0;">위험한 action 전의 permission prompt</li>
+    </ul>
+  </div>
+  <div>
+    <div class="col-head" style="color:var(--accent-3);">
+      <span class="dot" style="background:var(--accent-3);"></span><span>Steer &mdash; 목적으로 유도</span>
+    </div>
+    <ul class="bare" style="margin-top:18px;font-size:28px;line-height:1.5;">
+      <li style="border-bottom:1px solid var(--line-soft);padding:18px 0;">System prompt &mdash; job description</li>
+      <li style="border-bottom:1px solid var(--line-soft);padding:18px 0;">Structured output &mdash; schema 강제</li>
+      <li style="border-bottom:1px solid var(--line-soft);padding:18px 0;">Tool registry trimming</li>
+      <li style="padding:18px 0;">Verdict contracts &mdash; "PASS or FAIL로 끝내라"</li>
+    </ul>
+  </div>
 </div>
 
-<br>
+<div class="spacer" style="flex:0.5"></div>
 
-<div class="callout">
-12개월에 네 개의 cross-vendor standards
-</div>
+<p class="lede" style="text-align:center;font-family:var(--font-serif);font-style:italic;color:var(--accent-1);max-width:1400px;margin:0 auto;">
+규칙을 따르라고 부탁하지 마라 &mdash; 위반할 능력을 제거하라.
+</p>
 
 <!--
 [발표 시 짚을 포인트]
-- 12개월 동안 네 개의 cross-vendor standard가 도입됐다.
-- **MCP** (Model Context Protocol, Anthropic, 2024.11.25) — agent와 tool/data source 간 protocol. 첫날부터 open-source. OpenAI가 2025.04 채택, 2025.12 Linux Foundation으로 이관.
-- **AGENTS.md** (2025 중반, OpenAI Codex CLI) — project가 agent에게 context를 전달하는 Markdown 파일. Git처럼 project root → cwd 순으로 walk. 2025년 말 Linux Foundation으로 이관, 2026년 초 기준 약 60K open-source project가 사용.
-- **ACP** (Agent Client Protocol, Zed, 2025.08.27) — editor와 agent 간 protocol. LSP가 language server에 한 역할을 ACP가 agent에 수행한다.
-- **SKILL.md** (Anthropic Claude Skills, 2025.10.16; agentskills.io 표준 2025.12.18) — portable capability bundle. Markdown + YAML frontmatter + 선택적 script.
-- 각각이 minimal한 spec (text 한 장 또는 JSON-RPC 한 줄)이라는 점이 adoption 속도에 기여했다.
-
-[전달 메모]
-- adoption 규모를 강조한다 — 네 개 standard, 모든 major vendor (Anthropic, OpenAI, Google, Microsoft, Meta), 수십 개 CLI와 editor, 1년 안에 정착.
+- 강력한 generalist model을 task에 집중시키고 trouble에서 멀어지게 — 두 가지 보완적 축.
+- Constrain (negative): refusal training, output filter, sandbox, permission prompt.
+- Steer (positive): system prompt (job description), structured output (schema), tool denylist (위험한 tool 제거), verdict contract (PASS or FAIL).
+- 지난 1년 가장 흥미로운 design move: 구조적으로 enforce, 정중하게 부탁하지 않는다.
+- Claude Code의 read-only reviewer subagent에는 Edit tool이 *없다*. Rule이 prompt가 아니라 *없는 capability*. Model이 literally 위반할 수 없다.
+- 한 가지 mental model만 가져간다면, 이것을 가져가라.
 -->
 
 ---
 
-# 세 protocol, 세 layer
+<div class="eyebrow">12개월</div>
 
-<br>
+## <span class="title">네 가지 cross-vendor standards.</span>
 
-<div style="font-family: 'JetBrains Mono', monospace; font-size: 0.95em; line-height: 1.8;">
+<div class="spacer" style="flex:0.4"></div>
 
-<div class="card">
-
-📝 **Editor** *(Zed, VS Code, …)*
-
-⬇️  ACP
-
-🤖 **Agent** *(Claude Code, opencode, …)*
-
-⬇️  MCP
-
-🔧 **Tools / Resources** *(server)*
-
+<div class="standards-row">
+  <div class="std-card">
+    <div class="s-tag">Tool bridge</div>
+    <div class="s-name">MCP</div>
+    <div class="s-date">Anthropic · 2024.11.25</div>
+    <div class="s-tagline">Agent가 tool과 data와 대화하는 방법.</div>
+  </div>
+  <div class="std-card">
+    <div class="s-tag">Project context</div>
+    <div class="s-name">AGENTS.md</div>
+    <div class="s-date">OpenAI Codex CLI · 2025년 중반</div>
+    <div class="s-tagline">Project root에 있는 plain Markdown 파일.</div>
+  </div>
+  <div class="std-card">
+    <div class="s-tag">Editor bridge</div>
+    <div class="s-name">ACP</div>
+    <div class="s-date">Zed · 2025.08.27</div>
+    <div class="s-tagline">Editor가 agent와 대화하는 방법.</div>
+  </div>
+  <div class="std-card">
+    <div class="s-tag">Capability artifact</div>
+    <div class="s-name">SKILL.md</div>
+    <div class="s-date">Anthropic · 2025.10.16</div>
+    <div class="s-tagline">휴대 가능한 capability bundle &mdash; 같은 파일, 여러 agent.</div>
+  </div>
 </div>
 
-</div>
+<div class="spacer" style="flex:0.4"></div>
 
-<br>
-
-<div class="callout">
-LSP가 language server에 한 역할 — ACP는 agent에, MCP는 tool에 수행
-</div>
+<p class="body" style="color:var(--muted);font-family:var(--font-serif);font-style:italic;text-align:center;">
+각각 minimal &mdash; text-shaped 혹은 JSON-RPC-shaped. 그래서 adoption이 마찰 없었다.
+</p>
 
 <!--
 [발표 시 짚을 포인트]
-- 세 protocol, 세 layer 구조다. 각 protocol은 minimal하고 composable하다.
-- **Editor ↔ Agent: ACP** — editor (Zed 등)와 agent (Claude Code 등) 간 통신.
-- **Agent ↔ Tools: MCP** — agent와 외부 tool/data (GitHub server, Postgres server 등) 간 통신.
-- 2026년의 일반적인 setup: Zed가 Claude Code에 ACP로 연결되고, Claude Code가 GitHub, Postgres, Slack server에 MCP로 연결된다.
-- 각 layer의 vendor는 인접 layer에 영향 없이 교체 가능하다. LSP가 language server에서 달성한 composability와 동일한 구조다.
-
-[전달 메모]
-- 청중이 LSP를 알면 (VS Code/Vim의 code intelligence를 지원하는 protocol) 직접 비교한다. ACP가 agent에 대해, LSP가 language server에 한 역할.
-- LSP를 모르는 경우 단순 설명: "editor는 agent와 protocol A로 통신하고, agent는 tool과 protocol B로 통신한다."
+- 12개월에 cross-vendor standard 4개. 어떤 software 분야에서도 드물고, AI에서는 전례가 거의 없다.
+- MCP (Anthropic 2024.11.25): agent ↔ tool/data. OpenAI가 2025.04 채택, 2025.12 Linux Foundation에 donate.
+- AGENTS.md (mid-2025, OpenAI Codex CLI): plain Markdown, Git처럼 root에서 walk. 2025년 말 Linux Foundation donate, 60K open-source project 사용.
+- ACP (Zed 2025.08.27): editor ↔ agent. LSP가 language server에 한 역할.
+- SKILL.md (Anthropic 2025.10.16): portable capability bundle, Markdown + YAML.
+- 각각 minimal. 그게 adoption을 마찰 없게 했다.
 -->
 
 ---
 
-# SKILL.md — portable capability format
+<div class="eyebrow">어떻게 맞물리는가</div>
 
-```mermaid
-graph LR
-    A["Discovery<br/>name + description<br/>~100 tokens each"] --> B["Activation<br/>SKILL.md body<br/>read"]
-    B --> C["Execution<br/>scripts / templates<br/>load on demand"]
-```
+## <span class="title">세 protocol, 세 boundary.</span>
 
-<div class="cols-2">
-<div>
+<div class="spacer" style="flex:0.3"></div>
 
-**Progressive disclosure**
-
-30 skills × ~100 tokens<br>≈ **3K tokens** startup
-
-vs
-
-30 skills × ~2,000 tokens<br>≈ **60K tokens** eager load
-
+<div style="display:grid;grid-template-columns:1.3fr 1fr;gap:80px;align-items:center;">
+  <div class="layered">
+    <div class="layer">
+      <div class="l-name">Editor</div>
+      <div class="l-sub">Zed · VS Code · &hellip;</div>
+    </div>
+    <div class="protocol-arrow">↕&nbsp;&nbsp;ACP</div>
+    <div class="layer accent">
+      <div class="l-name">Agent</div>
+      <div class="l-sub">Claude Code · OpenCode · &hellip;</div>
+    </div>
+    <div class="protocol-arrow">↕&nbsp;&nbsp;MCP</div>
+    <div class="layer">
+      <div class="l-name">Tools &amp; resources</div>
+      <div class="l-sub">GitHub · Postgres · Slack &hellip;</div>
+    </div>
+  </div>
+  <div>
+    <p class="lede" style="margin-bottom:32px;font-family:var(--font-serif);font-style:italic;">
+      각 layer가 minimal. 각 layer가 swappable.
+    </p>
+    <p class="body" style="color:var(--muted);">
+      <b style="color:var(--fg);font-weight:500;">LSP</b>가 editor와 language server에 했던 것과 같은 모양 &mdash; composable plumbing.
+    </p>
+    <p class="body" style="margin-top:36px;color:var(--accent-3);font-family:var(--font-serif);font-style:italic;">
+      Editor를 swap, agent를 swap, tool server를 swap &mdash; 다른 둘은 알아채지 못한다.
+    </p>
+  </div>
 </div>
-<div class="callout">
-동일한 SKILL.md 파일이<br>Claude Code / Codex / Cursor /<br>OpenCode / Pi / Goose에서 동작
-</div>
-</div>
+
+<div class="spacer"></div>
 
 <!--
 [발표 시 짚을 포인트]
-- Skill은 디렉터리 단위 구조다. `SKILL.md` 한 파일 (Markdown + 2줄 YAML header: name, description + instruction)이 필수, 선택적으로 `scripts/` 하위 디렉터리가 포함된다.
-- 핵심 메커니즘은 **progressive disclosure** — 3단계 로딩이다.
-  - **Discovery**: startup에 agent가 각 skill의 name과 description만 로드 (~100 tokens).
-  - **Activation**: 모델이 skill이 필요하다고 판단하면 full body를 읽는다.
-  - **Execution**: body가 script나 template를 reference하면 그 시점에 로드.
-- 비용 비교: 30개 skill × 100 tokens (discovery) ≈ 3K, 동일한 30개 eager load ≈ 60K tokens (사용자 입력 이전 시점). progressive disclosure가 다수의 skill을 ship 가능하게 한다.
-- 동일한 SKILL.md 파일이 Claude Code, Codex CLI, Cursor, OpenCode, Pi, Goose 외 약 25개 도구에서 호환된다. format이 plain Markdown이라는 점이 호환성의 조건이다.
-- capability layer의 portability는 model layer의 portability와 별개로 확보됐다.
-
-[전달 메모]
-- portability의 조건은 format의 단순함이다. Markdown은 최소 사양의 format이고, 그래서 광범위하게 채택됐다.
+- 세 protocol, 세 layer, 세 job.
+- Editor ↔ Agent: ACP. Agent ↔ Tools: MCP.
+- 2026년 전형적인 setup: Zed가 Claude Code에 ACP로, Claude Code가 GitHub/Postgres/Slack server에 MCP로 말한다.
+- 각 layer의 vendor는 다른 layer를 건드리지 않고 swap 가능. LSP의 composability와 같은 모양.
+- LSP를 안다면 분석. 모른다면: "editor는 protocol 하나로 agent와, agent는 또 다른 protocol로 tool과 대화한다."
 -->
 
 ---
 
-# 다섯 agent, 다섯 가지 editorial 선택
+<div class="eyebrow">Capability artifacts</div>
 
-<div class="cols-5">
+## <span class="title">Skills는 필요할 때 load된다.</span>
 
-<div class="card">
+<div class="spacer" style="flex:0.3"></div>
 
-**claude-code**
+<svg viewBox="0 0 1680 320" style="width:100%;height:auto;">
+  <rect x="40" y="60" width="400" height="200" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+  <text x="240" y="100" text-anchor="middle" class="label-accent">Stage 1</text>
+  <text x="240" y="148" text-anchor="middle" class="label-title">Discovery</text>
+  <text x="240" y="184" text-anchor="middle" class="label" style="font-size:24px;fill:var(--muted)">name + description만</text>
+  <text x="240" y="220" text-anchor="middle" class="label-tiny">~100 tokens / skill</text>
+  <line x1="460" y1="160" x2="580" y2="160" class="stroke-1" stroke-width="1.5" />
+  <path d="M 570 154 L 580 160 L 570 166" class="stroke-1" stroke-width="1.5" fill="none" />
+  <rect x="600" y="60" width="400" height="200" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+  <text x="800" y="100" text-anchor="middle" class="label-accent">Stage 2</text>
+  <text x="800" y="148" text-anchor="middle" class="label-title">Activation</text>
+  <text x="800" y="184" text-anchor="middle" class="label" style="font-size:24px;fill:var(--muted)">full SKILL.md body 읽기</text>
+  <text x="800" y="220" text-anchor="middle" class="label-tiny">필요할 때</text>
+  <line x1="1020" y1="160" x2="1140" y2="160" class="stroke-1" stroke-width="1.5" />
+  <path d="M 1130 154 L 1140 160 L 1130 166" class="stroke-1" stroke-width="1.5" fill="none" />
+  <rect x="1160" y="60" width="400" height="200" rx="6" class="fill-1" />
+  <text x="1360" y="100" text-anchor="middle" class="label-accent" style="fill:var(--bg)">Stage 3</text>
+  <text x="1360" y="148" text-anchor="middle" class="label-title" style="fill:var(--bg)">Execution</text>
+  <text x="1360" y="184" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;opacity:.85;">scripts &amp; templates 열기</text>
+  <text x="1360" y="220" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;opacity:.7;letter-spacing:.06em;">참조될 때만</text>
+</svg>
 
-Anthropic
+<div class="spacer" style="flex:0.3"></div>
 
-🖥️ terminal
-
-<br>
-
-*the layered platform*
-
-</div>
-
-<div class="card">
-
-**opencode**
-
-SST
-
-🖥️🌐 terminal + web
-
-<br>
-
-*typed protocol surface*
-
-</div>
-
-<div class="card">
-
-**pi-mono**
-
-badlogic
-
-🖥️ terminal
-
-<br>
-
-*refuse-and-eject<br>minimalism*
-
-</div>
-
-<div class="card">
-
-**hermes-agent**
-
-Nous Research
-
-💬 multi-channel
-
-<br>
-
-*self-improving<br>training env*
-
-</div>
-
-<div class="card">
-
-**openclaw**
-
-community
-
-💬 multi-channel
-
-<br>
-
-*single-operator<br>gateway*
-
-</div>
-
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:24px;align-items:center;">
+  <div>
+    <div style="font-family:var(--font-mono);font-size:40px;line-height:1.4;color:var(--fg);">
+      30&nbsp;skills × 100&nbsp;tokens<br /><span style="color:var(--accent-3);">≈ 3K tokens (startup)</span>
+    </div>
+  </div>
+  <div>
+    <div style="font-family:var(--font-mono);font-size:40px;line-height:1.4;color:var(--muted);text-decoration:line-through;text-decoration-color:var(--accent-1);">
+      30&nbsp;skills × 2K&nbsp;tokens<br /><span>≈ 60K tokens (eager load)</span>
+    </div>
+  </div>
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- 이후 talk이 다룰 다섯 agent project의 개요다.
-- **claude-code** (Anthropic) — reference implementation. 모든 확장이 markdown + frontmatter 기반. MCP first-class. 약 40개 built-in tool, layered permission, 다수의 hook.
-- **opencode** (SST) — server-first. agent가 typed HTTP API 뒤에서 동작하고, terminal UI는 multiple client 중 하나. model catalog를 `models.dev`에서 실시간 동기화.
-- **pi-mono** (Mario Zechner) — 7개 tool. MCP, subagent, permission popup 모두 제외. 그 외 기능은 extension으로 분리. 의도적으로 minimal.
-- **hermes-agent** (Nous Research) — self-improving. agent가 자체 memory를 편집하고 skill을 생성. 동시에 다음 model의 training environment 역할.
-- **openclaw** (community) — 단일 operator, 3단계 Docker sandbox, multi-channel daemon. agent runtime으로 pi-mono를 embed.
-- 다섯을 외울 필요는 없다. 핵심은 각각이 *다른 editorial 선택을 했다*는 점이다.
-
-[전달 메모]
-- canonical name이 아닌 *예시*로 다룬다. 각 project가 대표하는 선택이 project 자체보다 중요하다.
+- Skill은 폴더. 안에 SKILL.md (Markdown + 두 줄 YAML header: name + description).
+- 핵심 혁신: progressive disclosure. 세 단계.
+  - Discovery: startup에 name+description만. ~100 token씩.
+  - Activation: model이 relevant하다고 판단하면 full body 읽기.
+  - Execution: body가 script reference하면 그때만 열기.
+- 계산: 30 skills × 100 tokens = 3K. eager load면 60K — 사용자가 입력하기도 전에. 그래서 이 format이 퍼졌다.
+- 같은 SKILL.md가 Claude Code, Codex, Cursor, OpenCode, Pi, Goose, ~25개 다른 tool에서 작동.
 -->
 
 ---
 
-# 다섯 agent의 cross-references
+<!-- _class: section-slide -->
 
-```mermaid
-graph TD
-    Pi[pi-mono] -->|embedded by| OC[openclaw]
-    OC -->|evolved into| He[hermes-agent]
-    CC[claude-code] -->|SKILL.md format<br/>adopted by| OPC[opencode]
-    PS[pi-skills] -->|ships identical files for| Five["5 agents:<br/>Pi · Codex · Amp · Droid · Claude Code"]
-    OC -->|drives via ACP| Nested["Codex · Claude Code ·<br/>Gemini CLI · OpenCode · Pi"]
-```
+<div class="part-no">Part III</div>
 
-<div class="callout">
-ecosystem이 compose된다는 실제 사례
+<h2 class="part-title">오늘날의 agents.</h2>
+
+<p class="part-blurb">다섯 project. 다섯 editorial 선택. 하나의 family tree.</p>
+
+<div class="part-rule"></div>
+
+---
+
+<div class="eyebrow">등장 인물</div>
+
+## <span class="title">5개의 agent, 한 눈에.</span>
+
+<div class="spacer" style="flex:0.3"></div>
+
+<div style="display:grid;grid-template-columns:repeat(5, 1fr);gap:32px;">
+  <div class="agent-card">
+    <div class="a-maker">Anthropic</div>
+    <div class="a-name">claude-code</div>
+    <div class="small" style="color:var(--muted);">Terminal. ~40개 built-in tool. MCP-first. 모든 곳의 hook.</div>
+    <div class="a-quote">"Layered platform."</div>
+  </div>
+  <div class="agent-card">
+    <div class="a-maker">SST</div>
+    <div class="a-name">opencode</div>
+    <div class="small" style="color:var(--muted);">Server-first. Typed HTTP API. Terminal은 하나의 client.</div>
+    <div class="a-quote">"Typed protocol surface."</div>
+  </div>
+  <div class="agent-card">
+    <div class="a-maker">M. Zechner</div>
+    <div class="a-name">pi-mono</div>
+    <div class="small" style="color:var(--muted);">7개 tool. No MCP. No subagent. No permission popup.</div>
+    <div class="a-quote">"Refuse-and-eject minimalism."</div>
+  </div>
+  <div class="agent-card">
+    <div class="a-maker">Nous Research</div>
+    <div class="a-name">hermes-agent</div>
+    <div class="small" style="color:var(--muted);">Self-improving. 자기 memory를 편집. 자기 skill 생성.</div>
+    <div class="a-quote">"Self-improving training environment."</div>
+  </div>
+  <div class="agent-card">
+    <div class="a-maker">Community</div>
+    <div class="a-name">openclaw</div>
+    <div class="small" style="color:var(--muted);">한 operator. 3단계 Docker sandbox. Multi-channel daemon.</div>
+    <div class="a-quote">"Single-operator gateway."</div>
+  </div>
 </div>
+
+<div class="spacer"></div>
+
+<p class="body" style="text-align:center;color:var(--muted);font-family:var(--font-serif);font-style:italic;">
+다섯을 외울 필요는 없다. 각각이 다른 editorial 선택을 한다 &mdash; 그게 핵심.
+</p>
 
 <!--
 [발표 시 짚을 포인트]
-- 다섯 project는 독립적이지 않다. 코드, format, dependency를 공유한다.
-- **openclaw**는 agent loop을 자체 구현하지 않는다. pi-mono를 library로 import하고 session lane, sandbox, multi-channel routing을 추가한다.
-- **hermes-agent**는 `hermes claw migrate` 명령어로 `~/.openclaw` 디렉터리를 import한다. hermes-agent는 openclaw에서 분기된 프로젝트다.
-- **opencode**는 `~/.claude/skills/`를 직접 읽는다. provider-agnosticism이 model에서 artifact 레벨로 확장됐다.
-- **pi-skills** (community skill collection)는 5개 agent용 install instruction과 함께 동일한 SKILL.md 파일을 배포한다 — Pi, Codex, Amp, Droid, Claude Code.
-- **openclaw**는 ACP를 양방향으로 사용한다. IDE용 ACP server이면서, `acpx` extension으로 Codex / Claude Code / Gemini CLI / OpenCode / Pi를 nested ACP child로 실행한다.
-- 각 cross-reference가 standards의 실제 동작과 ecosystem의 composability를 보여준다.
-
-[전달 메모]
-- 이 슬라이드가 다음 universals 슬라이드의 근거다. 표준이 *말로만*이 아니라 *실제로* interop을 만든다는 점을 보여주면 abstraction이 구체화된다.
+- 이 다섯이 talk 나머지의 grounding.
+- claude-code (Anthropic): layered platform, MCP-first, 모든 hook.
+- opencode (SST): server-first, typed HTTP API.
+- pi-mono (Mario Zechner): 7개 tool, MCP 거부, subagent 거부, permission popup 거부.
+- hermes-agent (Nous Research): self-improving, agent가 자기 memory 편집.
+- openclaw: 한 operator, 3단계 Docker sandbox, multi-channel daemon.
+- 외우지 마라. 각각 다른 editorial 선택을 한다는 게 핵심.
 -->
 
 ---
 
-# One loop, many policies
+<div class="eyebrow">Ecosystem이 compose된다</div>
 
-```mermaid
-graph LR
-    P1[prompt + tool filter A] --> Loop((Agent<br/>Loop))
-    P2[prompt + tool filter B] --> Loop
-    P3[prompt + tool filter C] --> Loop
-    P4[prompt + tool filter D] --> Loop
-    Loop --> R1[interactive coding]
-    Loop --> R2[subagent: explore]
-    Loop --> R3[subagent: verify]
-    Loop --> R4[background memory<br/>consolidation]
-```
+## <span class="title">Family tree.</span>
 
-<div class="callout">
-multi-agent는 별도 platform이 아니라 동일 loop의 다른 configuration
-</div>
+<div class="spacer" style="flex:0.2"></div>
+
+<svg viewBox="0 0 1680 580" style="width:100%;height:auto;">
+  <!-- Nodes -->
+  <rect x="60"  y="40" width="320" height="104" rx="8" class="stroke fill-paper" stroke-width="1.5" />
+  <text x="220" y="96"  text-anchor="middle" class="label-title">claude-code</text>
+  <text x="220" y="132" text-anchor="middle" class="label-tiny">Anthropic</text>
+  <rect x="700" y="40" width="320" height="104" rx="8" class="stroke fill-paper" stroke-width="1.5" />
+  <text x="860" y="96"  text-anchor="middle" class="label-title">opencode</text>
+  <text x="860" y="132" text-anchor="middle" class="label-tiny">SST</text>
+  <rect x="700" y="238" width="320" height="104" rx="8" class="fill-3" />
+  <text x="860" y="294" text-anchor="middle" class="label-title" style="fill:var(--bg)">openclaw</text>
+  <text x="860" y="330" text-anchor="middle" class="label-tiny" style="fill:var(--bg);opacity:.75;">community</text>
+  <rect x="1280" y="238" width="320" height="104" rx="8" class="stroke-1 fill-paper" stroke-width="2" />
+  <text x="1440" y="294" text-anchor="middle" class="label-title">hermes-agent</text>
+  <text x="1440" y="330" text-anchor="middle" class="label-tiny">Nous Research</text>
+  <rect x="60"  y="436" width="320" height="104" rx="8" class="fill-1" />
+  <text x="220" y="492" text-anchor="middle" class="label-title" style="fill:var(--bg)">pi-mono</text>
+  <text x="220" y="528" text-anchor="middle" class="label-tiny" style="fill:var(--bg);opacity:.75;">M. Zechner</text>
+  <rect x="700" y="436" width="320" height="104" rx="8" class="stroke fill-paper" stroke-width="1.5" />
+  <text x="860" y="492" text-anchor="middle" class="label-title">5개 nested agents</text>
+  <text x="860" y="528" text-anchor="middle" class="label-tiny">Codex · Gemini CLI · …</text>
+  <!-- Edges -->
+  <g class="stroke-1" stroke-width="1.5" fill="none">
+    <line x1="380" y1="92" x2="700" y2="92" />
+    <path d="M 692 87 L 700 92 L 692 97" stroke-linecap="round"/>
+    <path d="M 380 488 C 540 488, 580 290, 700 290" />
+    <path d="M 692 285 L 700 290 L 692 295" stroke-linecap="round"/>
+    <line x1="1020" y1="290" x2="1280" y2="290" />
+    <path d="M 1272 285 L 1280 290 L 1272 295" stroke-linecap="round"/>
+    <line x1="860" y1="342" x2="860" y2="436" />
+    <path d="M 855 428 L 860 436 L 865 428" stroke-linecap="round"/>
+  </g>
+  <!-- Edge labels -->
+  <text x="540"  y="80"  text-anchor="middle" class="label-tiny" style="fill:var(--accent-1);">SKILL.md adopted by</text>
+  <text x="540"  y="396" text-anchor="middle" class="label-tiny" style="fill:var(--accent-1);">embedded by</text>
+  <text x="1150" y="278" text-anchor="middle" class="label-tiny" style="fill:var(--accent-1);">evolved into</text>
+  <text x="880"  y="396" class="label-tiny" style="fill:var(--accent-1);">drives via ACP</text>
+</svg>
+
+<div class="spacer" style="flex:0.3"></div>
+
+<p class="body" style="text-align:center;color:var(--accent-3);font-family:var(--font-serif);font-style:italic;">
+Standards는 진짜다. Ecosystem이 compose된다.
+</p>
 
 <!--
 [발표 시 짚을 포인트]
-- 다섯 agent에서 가장 공통적으로 나타나는 pattern이다.
-- 동일한 `while (true) { call model; run tools }` loop 위에 다른 policy (prompt, tool filter, permission context)가 적용된다.
-- claude-code의 경우 단일 파일 `query.ts`가 interactive REPL, headless SDK call, 모든 종류의 subagent, remote session, background memory consolidation을 모두 처리한다. 모두 동일 loop의 configuration이다.
-- 구체 예시: "verify" subagent는 동일 loop에 mutating tool을 제거한 denylist + "implementation을 break하라"는 prompt + "VERDICT: PASS or FAIL로 종료"라는 contract가 결합된 형태다. "explore" subagent는 동일 loop에 read-only tool만 노출한다.
-- 결론: multi-agent behavior는 별도 platform이 아니다. 동일 loop을 다르게 configure한 결과다.
-
-[전달 메모]
-- 이 명제를 명확하게 전달한다. "Subagent는 별도 engine이 아닙니다."
+- 다섯 project는 isolated되어 있지 않다. 서로 code/format을 공유, 의존.
+- openclaw → pi-mono를 library로 import (reinvent 안 함).
+- hermes-agent → openclaw에서 자라남. `hermes claw migrate` command로 ~/.openclaw import.
+- opencode → Claude Code의 skills directory를 직접 읽음.
+- pi-skills → 5개 agent용 install instruction과 함께 동일 SKILL.md 파일 ship.
+- openclaw → ACP 양방향. IDE를 위한 ACP server이자, Codex/Claude Code/Gemini CLI/OpenCode/Pi를 nested child로 drive.
+- Family tree, competition table 아니다. Standards가 진짜라는 증거.
 -->
 
 ---
 
-# 다섯이 합의하는 영역 — universals
+<!-- _class: section-slide -->
 
-<div class="cols-2">
-<div>
+<div class="part-no">Part IV</div>
 
-✅ One loop, many policies
+<h2 class="part-title">Patterns &amp; rifts.</h2>
 
-✅ Methodology in prompts, not state
+<p class="part-blurb">다섯이 모두 합의하는 것. 그래도 합의하지 못한 곳.</p>
 
-✅ Compaction as control flow
+<div class="part-rule"></div>
 
-</div>
-<div>
+---
 
-✅ Streaming + parallel tool execution
+<div class="eyebrow">Universal pattern</div>
 
-✅ SKILL.md + AGENTS.md as<br>cross-vendor artifacts
+## <span class="title">One loop. Many policies.</span>
 
-✅ ACP for editors, MCP for tools
+<div class="spacer" style="flex:0.2"></div>
 
-</div>
-</div>
+<svg viewBox="0 0 1680 580" style="width:100%;height:auto;">
+  <circle cx="840" cy="290" r="180" class="stroke" stroke-width="2" fill="var(--paper)" />
+  <text x="840" y="270" text-anchor="middle" class="label-title" style="font-size:34px;">while&nbsp;true:</text>
+  <text x="840" y="312" text-anchor="middle" class="label-title" style="font-size:24px;fill:var(--muted)">call model</text>
+  <text x="840" y="346" text-anchor="middle" class="label-title" style="font-size:24px;fill:var(--muted)">run tools</text>
+  <g class="stroke-1" stroke-width="1.5" fill="none">
+    <line x1="668" y1="200" x2="280" y2="80"  />
+    <line x1="668" y1="380" x2="280" y2="500" />
+    <line x1="1012" y1="200" x2="1400" y2="80" />
+    <line x1="1012" y1="380" x2="1400" y2="500"/>
+  </g>
+  <rect x="40"   y="20"  width="430" height="124" rx="6" class="fill-paper stroke" stroke-width="1" />
+  <text x="60"   y="58"  class="label-accent">prompt A</text>
+  <text x="60"   y="88"  class="label" style="font-size:24px;fill:var(--muted);font-style:italic;font-family:var(--font-serif);">all tools</text>
+  <text x="60"   y="124" class="label-title" style="font-size:26px;">Interactive coding</text>
+  <rect x="40"   y="436" width="430" height="124" rx="6" class="fill-paper stroke" stroke-width="1" />
+  <text x="60"   y="474" class="label-accent">prompt B</text>
+  <text x="60"   y="504" class="label" style="font-size:24px;fill:var(--muted);font-style:italic;font-family:var(--font-serif);">read-only tools</text>
+  <text x="60"   y="540" class="label-title" style="font-size:26px;">Subagent: explore</text>
+  <rect x="1210" y="20"  width="430" height="124" rx="6" class="fill-paper stroke" stroke-width="1" />
+  <text x="1230" y="58"  class="label-accent">prompt C</text>
+  <text x="1230" y="88"  class="label" style="font-size:24px;fill:var(--muted);font-style:italic;font-family:var(--font-serif);">denylist mutators</text>
+  <text x="1230" y="124" class="label-title" style="font-size:26px;">Subagent: verify</text>
+  <rect x="1210" y="436" width="430" height="124" rx="6" class="fill-paper stroke" stroke-width="1" />
+  <text x="1230" y="474" class="label-accent">prompt D</text>
+  <text x="1230" y="504" class="label" style="font-size:24px;fill:var(--muted);font-style:italic;font-family:var(--font-serif);">background · no user</text>
+  <text x="1230" y="540" class="label-title" style="font-size:26px;">Memory consolidation</text>
+</svg>
 
-<div class="callout">
-universals — designer가 더 이상 차이를 만들지 않는 영역
-</div>
+<div class="spacer" style="flex:0.3"></div>
+
+<p class="lede" style="text-align:center;font-family:var(--font-serif);font-style:italic;color:var(--accent-3);">
+Multi-agent는 별도 platform이 아니다. 같은 loop을 다르게 configure한 것이다.
+</p>
 
 <!--
 [발표 시 짚을 포인트]
-- 이 여섯 가지 pattern이 다섯 agent 모두에서 확인된다. 즉, designer 간 차이가 더 이상 발생하지 않는 영역이다.
-- **One loop, many policies** — 앞 슬라이드의 내용.
-- **Methodology in prompts, not state** — 코드에 rigid한 phase-based state machine이 없다. 모델이 sequencer 역할을 하고, runtime은 그 선택을 safe하게 만드는 역할만 한다.
-- **Compaction as control flow** — context window 관리가 별도 feature가 아니라 매 turn의 일부다. claude-code는 매 model call 전 다섯 단계의 compaction을 실행한다.
-- **Streaming + parallel tool execution** — model token output과 동시에 tool이 실행되고, 한 turn에 여러 tool이 병렬 dispatch된다.
-- **SKILL.md + AGENTS.md** — capability와 project context를 위한 cross-vendor 파일 convention.
-- **ACP for editors, MCP for tools** — 두 cross-vendor protocol.
-- 이 영역의 안정화가 designer로 하여금 *흥미로운 차이*에 집중하게 한다. 다음 슬라이드 주제.
-
-[전달 메모]
-- 이 list는 가독성을 위해 선별한 것이다. 추가 universal (recovery as control flow, prefix-cache discipline, pattern-rule permissions 등)이 있으나 질문이 나오면 언급한다.
+- 분야에서 가장 universal한 pattern.
+- 같은 loop (call model, run tools, repeat)이 prompt + tool filter + permission context를 바꾸면 완전히 다른 behavior로 reconfigure.
+- Claude Code의 source에서 파일 하나가 interactive REPL, subagent, remote session, background memory consolidation을 다 처리.
+- "verify" subagent: mutating tool 제거한 loop + "이것을 깨뜨려라" prompt.
+- "explore" subagent: read-only tool만 있는 loop.
+- Multi-agent behavior는 별도 platform이 아니라 같은 loop을 reconfigure한 것이다.
 -->
 
 ---
 
-# 다섯이 갈리는 지점 — rifts
+<div class="eyebrow">Universals &mdash; 더 이상 흥미롭지 않은 것</div>
 
-<br>
+## <span class="title">다섯이 모두 합의하는 것.</span>
 
-<table>
-<tr>
-<th>축</th><th>한쪽 극</th><th>다른 쪽 극</th>
-</tr>
-<tr><td>Process model</td><td>server-first</td><td>binary-first</td></tr>
-<tr><td>MCP</td><td>load-bearing</td><td>deliberately refused</td></tr>
-<tr><td>Sandbox</td><td>in core</td><td>your problem</td></tr>
-<tr><td>Memory</td><td>layered + curator</td><td>none in core</td></tr>
-<tr><td>Subagents</td><td>first-class</td><td>refused</td></tr>
-<tr><td>Trust frame</td><td>multi-tenant</td><td>one-operator</td></tr>
-</table>
+<div class="spacer" style="flex:0.3"></div>
 
-<div class="callout">
-모두 architectural이 아니라 editorial — 한쪽 선택이 나머지 결정을 결정한다
+<div class="checklist">
+  <div class="check-item"><span class="ck">✓</span><span>One loop, many policies</span></div>
+  <div class="check-item"><span class="ck">✓</span><span>Methodology가 prompt에, state에 아니라</span></div>
+  <div class="check-item"><span class="ck">✓</span><span>Compaction이 control flow의 일부</span></div>
+  <div class="check-item"><span class="ck">✓</span><span>Streaming + parallel tool execution</span></div>
+  <div class="check-item"><span class="ck">✓</span><span>SKILL.md + AGENTS.md as artifacts</span></div>
+  <div class="check-item"><span class="ck">✓</span><span>ACP for editors, MCP for tools</span></div>
 </div>
+
+<div class="spacer" style="flex:0.4"></div>
+
+<p class="body" style="color:var(--muted);font-family:var(--font-serif);font-style:italic;max-width:1300px;">
+"Uninteresting"은 positive &mdash; stable foundation이 있어야 designer들이 흥미로운 차이에 집중할 수 있다.
+</p>
 
 <!--
 [발표 시 짚을 포인트]
-- 다섯 agent가 structurally disagree하는 여섯 축.
-- **Server-first vs binary-first** — agent가 daemon (opencode, hermes, openclaw)인지 single binary (claude-code, pi-mono)인지. multi-surface (mobile, IDE, chat) 지원의 비용을 결정한다.
-- **MCP load-bearing vs refused** — 셋이 core에 통합 (claude-code, opencode, hermes-agent), 둘이 명시적으로 제외 (pi-mono, openclaw). 제외는 ignorance가 아니라 design position이다.
-- **Sandbox in core vs your problem** — openclaw는 3단계 Docker sandbox를 ship, pi-mono는 sandbox를 사용자에게 위임한다.
-- **Memory layered + curator vs none** — hermes-agent는 stale skill을 auto-archive하는 curator가 있는 4-layer memory, pi-mono는 learned memory가 없다, claude-code는 중간.
-- **Subagents first-class vs refused** — claude-code는 약 6개 built-in subagent type, pi-mono는 subagent를 거부한다.
-- **Multi-tenant vs one-operator** — openclaw는 single user, single host를 명시적으로 가정, 나머지는 implicit multi-tenant.
-- 모두 right/wrong 판단의 문제가 아니다. editorial 선택이며, 한쪽 선택이 나머지 결정의 대부분을 예측한다.
-
-[전달 메모]
-- 위계를 암시하지 않는다. refusal이 부정적으로 들릴 수 있으나, pi-mono의 MCP 거부, openclaw의 agent hierarchy 거부는 design goal에 부합하는 의도된 선택이다.
+- 이 여섯 pattern이 다섯 agent *모두*에 나타난다.
+- 좋은 의미에서 더 이상 흥미롭지 않다 — designer들이 더 이상 differ하지 않는 곳.
+- One loop, many policies.
+- Methodology가 state machine이 아니라 prompt에.
+- Compaction이 optional feature가 아니라 매 turn의 일부.
+- Streaming + parallel tool execution.
+- SKILL.md + AGENTS.md as cross-vendor 파일 format.
+- ACP for editors, MCP for tools.
+- "Uninteresting" framing은 positive — stable foundation이 있어야 designer들이 흥미로운 차이에 집중할 수 있다.
 -->
 
 ---
 
-# 2026의 AI agent — canonical structure
+<div class="eyebrow">Rifts &mdash; editorial 선택이 사는 곳</div>
 
-<br>
+## <span class="title">그래도 합의하지 못한 곳.</span>
 
-```
-┌───────────────────────────────────────────────────┐
-│  Surface  (TUI · chat · IDE · …)                  │
-├───────────────────────────────────────────────────┤
-│  Session  (history · compaction · retry)          │
-├───────────────────────────────────────────────────┤
-│  Loop     (prompt → model → tools → result)       │
-├───────────────────────────────────────────────────┤
-│  Provider · Tools · Permissions                    │
-├───────────────────────────────────────────────────┤
-│  Extensions  (MCP · Skills · Plugins · Hooks)     │
-└───────────────────────────────────────────────────┘
-```
+<div class="spacer" style="flex:0.2"></div>
 
-<div class="callout">
-streaming chat loop + tools + permissions + extensions —<br>
-prompt + tool filter + permission policy 조합으로 multiple runtime을 구성
+<div class="rifts">
+  <div class="l">Server-first</div>     <div class="mid">vs</div> <div class="r">Binary-first</div>
+  <div class="row-line"></div>
+  <div class="l">MCP load-bearing</div> <div class="mid">vs</div> <div class="r">명시적 거부</div>
+  <div class="row-line"></div>
+  <div class="l">Sandbox in core</div>  <div class="mid">vs</div> <div class="r">Sandbox는 너의 문제</div>
+  <div class="row-line"></div>
+  <div class="l">Memory + curator</div> <div class="mid">vs</div> <div class="r">Learned memory 없음</div>
+  <div class="row-line"></div>
+  <div class="l">Subagents first-class</div> <div class="mid">vs</div> <div class="r">Subagent 거부</div>
+  <div class="row-line"></div>
+  <div class="l">Multi-tenant</div>     <div class="mid">vs</div> <div class="r">One-operator</div>
 </div>
+
+<div class="spacer" style="flex:0.4"></div>
+
+<p class="body" style="color:var(--muted);font-family:var(--font-serif);font-style:italic;text-align:center;">
+Right-or-wrong이 아니다. 각 agent가 한쪽을 택한다 &mdash; 그 선택이 나머지 결정 대부분을 예측한다.
+</p>
 
 <!--
 [발표 시 짚을 포인트]
-- 모든 modern AI agent의 layered structure다.
-- **Surface** — 사용자 접점 (terminal, IDE, chat app, mobile, web).
-- **Session** — durable conversation state, history와 compaction 포함.
-- **Loop** — 슬라이드 8의 agent loop.
-- **Provider / Tools / Permissions** — model API, tool registry, capability에 대한 rule set.
-- **Extensions** — MCP server, skill, plugin, agent-specific config.
-- 다섯 agent 모두 이 structure에 부합한다. 차이는 *각 layer의 구현 방식*이지, *layer의 존재 여부*가 아니다.
-- 한 문장 정의: streaming chat loop over a provider abstraction, with tools, permissions, and extensions — configurable into many runtimes by changing prompt + tool filter + permission policy.
-
-[전달 메모]
-- 슬라이드 8의 loop과 연결한다. 동일 loop이 더 큰 stack 안에 위치한 모습이다.
+- 다섯 agent 사이의 여섯 structural disagreement.
+- Server-first vs binary-first — agent가 daemon이냐 single binary냐.
+- MCP load-bearing vs 거부 — 셋은 core에 build, 둘은 명시적 거부.
+- Sandbox in core vs your problem — openclaw 3단계 Docker, pi-mono는 사용자에게.
+- Memory + curator vs none — hermes는 4-layer, pi는 0, claude-code는 중간.
+- Subagents first-class vs 거부 — claude-code 6+개, pi-mono 완전 거부.
+- Multi-tenant vs one-operator — openclaw 명시적 single-user.
+- Right-or-wrong이 아니다. 각 agent의 editorial 선택. 그 선택이 나머지 결정 대부분을 예측한다.
 -->
 
 ---
 
-# Problem class에 따른 pattern 선택
+<!-- _class: section-slide -->
 
-```mermaid
-graph TD
-    Start[Agent를 만든다면?] --> Q1[혼자서 코딩 -<br/>hand-buildable?]
-    Q1 -->|Yes| Pi[pi-mono pattern<br/>refuse-and-eject]
-    Q1 -->|No| Q2[Platform으로?]
-    Q2 -->|Yes| CC[claude-code pattern<br/>layered platform]
-    Q2 -->|No| Q3[어디서든 동작?<br/>mobile + IDE + web]
-    Q3 -->|Yes| OPC[opencode pattern<br/>typed protocol]
-    Q3 -->|No| Q4[Chat platform 위의<br/>personal assistant?]
-    Q4 -->|Yes| OW[openclaw pattern<br/>single-operator gateway]
-    Q4 -->|No| He[hermes-agent pattern<br/>self-improving + training]
-```
+<div class="part-no">Part V</div>
+
+<h2 class="part-title">종합.</h2>
+
+<p class="part-blurb">Canonical shape. Picker. 2026의 floor.</p>
+
+<div class="part-rule"></div>
+
+---
+
+<div class="eyebrow">2026년의 AI agent란</div>
+
+## <span class="title">Canonical shape.</span>
+
+<div class="spacer" style="flex:0.3"></div>
+
+<svg viewBox="0 0 1680 320" style="width:100%;height:auto;">
+  <rect x="20"   y="60" width="300" height="200" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+  <text x="170"  y="100" text-anchor="middle" class="label-accent">Layer 1</text>
+  <text x="170"  y="148" text-anchor="middle" class="label-title">Surface</text>
+  <text x="170"  y="186" text-anchor="middle" class="label" style="font-size:24px;fill:var(--muted);">terminal · IDE · chat</text>
+  <rect x="350"  y="60" width="300" height="200" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+  <text x="500"  y="100" text-anchor="middle" class="label-accent">Layer 2</text>
+  <text x="500"  y="148" text-anchor="middle" class="label-title">Session</text>
+  <text x="500"  y="186" text-anchor="middle" class="label" style="font-size:24px;fill:var(--muted);">history · compaction</text>
+  <rect x="680"  y="60" width="300" height="200" rx="6" class="fill-1" />
+  <text x="830"  y="100" text-anchor="middle" class="label-accent" style="fill:var(--bg)">Layer 3</text>
+  <text x="830"  y="148" text-anchor="middle" class="label-title" style="fill:var(--bg)">Loop</text>
+  <text x="830"  y="186" text-anchor="middle" style="font-size:24px;fill:var(--bg);font-family:var(--font-label);opacity:.85;">think · act · observe</text>
+  <rect x="1010" y="60" width="300" height="200" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+  <text x="1160" y="100" text-anchor="middle" class="label-accent">Layer 4</text>
+  <text x="1160" y="148" text-anchor="middle" class="label-title" style="font-size:24px;">Provider · Tools</text>
+  <text x="1160" y="182" text-anchor="middle" class="label-title" style="font-size:24px;">· Permissions</text>
+  <text x="1160" y="216" text-anchor="middle" class="label" style="font-size:24px;fill:var(--muted);">policy</text>
+  <rect x="1340" y="60" width="300" height="200" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+  <text x="1490" y="100" text-anchor="middle" class="label-accent">Layer 5</text>
+  <text x="1490" y="148" text-anchor="middle" class="label-title">Extensions</text>
+  <text x="1490" y="186" text-anchor="middle" class="label" style="font-size:24px;fill:var(--muted);">MCP · skills · plugins</text>
+  <g class="stroke-1" stroke-width="1.5" fill="none">
+    <line x1="320" y1="160" x2="350" y2="160" /><path d="M 342 154 L 350 160 L 342 166" stroke-linecap="round"/>
+    <line x1="650" y1="160" x2="680" y2="160" /><path d="M 672 154 L 680 160 L 672 166" stroke-linecap="round"/>
+    <line x1="980" y1="160" x2="1010" y2="160" /><path d="M 1002 154 L 1010 160 L 1002 166" stroke-linecap="round"/>
+    <line x1="1310" y1="160" x2="1340" y2="160" /><path d="M 1332 154 L 1340 160 L 1332 166" stroke-linecap="round"/>
+  </g>
+</svg>
+
+<div class="spacer" style="flex:0.4"></div>
+
+<p class="lede" style="font-family:var(--font-serif);font-style:italic;color:var(--accent-3);max-width:1500px;line-height:1.25;">
+Streaming chat loop over a provider abstraction &mdash; with tools, permissions, and extensions &mdash; 여러 runtime으로 configurable.
+</p>
 
 <!--
 [발표 시 짚을 포인트]
-- "best" agent는 존재하지 않는다. 다섯 problem class에 대응하는 다섯 pattern이 있다.
-- **혼자서 코딩, hand-buildable** → pi-mono pattern. tool 7개, no MCP, refuse-and-eject. 단순하고 opinionated하다.
-- **Coding agent를 platform으로** → claude-code pattern. layered platform, MCP-first, 모든 확장이 markdown + frontmatter 기반. ecosystem을 전제로 한다.
-- **어디서든 동작하는 coding agent** → opencode pattern. server-first, typed HTTP API, 다중 client (terminal, web, mobile, IDE).
-- **Chat platform 위의 personal assistant** → openclaw pattern. single-operator gateway, multi-channel daemon, Docker-tiered sandbox.
-- **Self-improving + training environment** → hermes-agent pattern. skill을 auto-archive하는 curator, trajectory generation을 위한 batch-runner. agent runtime이 자체 training distribution을 생성한다.
-- 적절한 질문은 "어떤 agent가 best인가"가 아니라 "어떤 problem class에 해당하는가"다. 그 답이 pattern을 결정한다.
-
-[전달 메모]
-- 슬라이드 19의 rift들이 problem class와 상관관계를 가진다는 점이 thesis의 근거다. 따라서 disagreement가 architectural이 아니라 editorial로 정리된다.
+- 모든 modern AI agent의 한 도식, 한 번 그렸다.
+- Surface — 사람이 보는 것. Session — durable한 conversation state. Loop — 앞서 그린 spine.
+- Provider · Tools · Permissions — model API, tool registry, 규칙들. Extensions — MCP server, skill, plugin.
+- 다섯 agent 모두 이 모양에 fit. 다른 것은 각 layer가 *어떻게 build되었는가*이지, *layer가 있는지 여부*가 아니다.
+- 한 문장: streaming chat loop over a provider abstraction — with tools, permissions, extensions — configurable into many runtimes by changing prompt + tool filter + permission policy.
 -->
 
 ---
 
-# 2026 agent 구현 — 기본 요소 10가지
+<div class="eyebrow">문제에 맞는 pattern을 골라라</div>
 
-<div class="cols-2">
-<div>
+## <span class="title">어떤 문제 class에 있는가?</span>
 
-1. Streaming chat loop
-2. Tool registry + schema validation
-3. SKILL.md loader
-4. AGENTS.md walk
-5. Compaction stage
+<div class="spacer" style="flex:0.3"></div>
 
+<div class="branches">
+  <div class="branch">
+    <div class="q"><b>혼자 코딩</b>, hand-buildable</div>
+    <div class="ar">→</div>
+    <div class="a">pi-mono pattern</div>
+  </div>
+  <div class="branch">
+    <div class="q">Ecosystem을 위한 <b>platform</b>으로서의 coding agent</div>
+    <div class="ar">→</div>
+    <div class="a">claude-code pattern</div>
+  </div>
+  <div class="branch">
+    <div class="q"><b>Everywhere</b>에서 도는 coding agent &mdash; terminal, web, IDE, mobile</div>
+    <div class="ar">→</div>
+    <div class="a">opencode pattern</div>
+  </div>
+  <div class="branch">
+    <div class="q"><b>Chat platform</b>에서의 personal assistant, single-operator</div>
+    <div class="ar">→</div>
+    <div class="a">openclaw pattern</div>
+  </div>
+  <div class="branch">
+    <div class="q"><b>Self-improving</b> agent + training environment</div>
+    <div class="ar">→</div>
+    <div class="a">hermes-agent pattern</div>
+  </div>
 </div>
-<div>
 
-6. Permissions OR sandbox
-7. MCP (또는 명시적 refusal)
-8. ACP server
-9. Durable session store
-10. Subagent affordance
+<div class="spacer" style="flex:0.3"></div>
 
-</div>
-</div>
-
-<br>
-
-<div class="callout">
-어느 것도 reinvent할 필요가 없다 — 다섯 project 중 최소 하나에 모두 구현되어 있다<br>
-의미 있는 작업은 <strong>problem class에 맞는 pattern을 선택하고 나머지를 제외하는 것</strong>이다
-</div>
+<p class="body" style="color:var(--muted);font-family:var(--font-serif);font-style:italic;text-align:center;">
+옳은 질문은 &mdash; 내가 어떤 문제 class에 있는가? 그 답이 pattern을 고른다.
+</p>
 
 <!--
 [발표 시 짚을 포인트]
-- 2026년 시점에 agent를 신규 구현할 때 기본으로 요구되는 요소다.
-- 각 항목은 현재의 minimum requirement이며 future feature가 아니다.
-- 항목 요약:
-  1. streaming model+tool loop
-  2. schema validation이 포함된 tool registry
-  3. SKILL.md loader
-  4. cwd에서 root로 AGENTS.md walk
-  5. compaction stage
-  6. permissions 또는 sandbox
-  7. MCP support 또는 명시적 refusal
-  8. ACP server
-  9. durable session store
-  10. subagent affordance
-- 어느 항목도 처음부터 invent할 필요는 없다. 다섯 project 중 최소 하나에 구현되어 있으며, 대다수 항목은 모든 project에 구현되어 있다.
-- 2026 시점의 의미 있는 작업은 reinvent가 아니라 **problem class에 맞는 pattern을 선택**하고 **나머지를 의도적으로 제외**하는 것이다.
-
-[전달 메모]
-- 이 슬라이드가 practical takeaway에 해당한다. 구현을 계획 중인 청중에게 checklist 역할을 한다.
+- "Best" agent는 없다. Problem class별 pattern.
+- 혼자 코딩, hand-buildable → pi-mono pattern.
+- Ecosystem을 위한 platform → claude-code pattern.
+- Everywhere에서 도는 agent → opencode pattern.
+- Chat platform 위의 personal assistant → openclaw pattern.
+- Self-improving + training environment → hermes-agent pattern.
+- 옳은 질문은 "어떤 agent가 best인가"가 아니라 "내가 어떤 problem class에 있는가". 그 답이 pattern을 고른다.
+- Rift들이 problem class와 correlate한다 — 그래서 disagreement가 editorial이지 architectural이 아니다.
 -->
 
 ---
 
-<!-- _class: lead -->
+<div class="eyebrow">2026에 agent를 만든다면 &mdash; 이것이 floor</div>
 
-# Closing
+## <span class="title">10가지 table stakes.</span>
 
-<br>
+<div class="spacer" style="flex:0.3"></div>
 
-> Agents agree more than they disagree.
+<div style="display:grid;grid-template-columns:repeat(2, 1fr);column-gap:80px;row-gap:18px;font-size:28px;">
+  <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+    <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:24px;">01</span>
+    <span>Streaming model + tool loop</span>
+  </div>
+  <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+    <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:24px;">02</span>
+    <span>Schema validation 있는 tool registry</span>
+  </div>
+  <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+    <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:24px;">03</span>
+    <span>SKILL.md loader</span>
+  </div>
+  <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+    <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:24px;">04</span>
+    <span>cwd에서 AGENTS.md walk</span>
+  </div>
+  <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+    <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:24px;">05</span>
+    <span>매 turn compaction stage</span>
+  </div>
+  <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+    <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:24px;">06</span>
+    <span>Permissions <em style="color:var(--muted);">또는</em> sandbox</span>
+  </div>
+  <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+    <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:24px;">07</span>
+    <span>MCP support <em style="color:var(--muted);">또는</em> 명시적 refusal</span>
+  </div>
+  <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+    <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:24px;">08</span>
+    <span>ACP server</span>
+  </div>
+  <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+    <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:24px;">09</span>
+    <span>Durable session store</span>
+  </div>
+  <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+    <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:24px;">10</span>
+    <span>Subagent affordance</span>
+  </div>
+</div>
 
-> 남은 차이는 *editorial*이다 —<br>무엇을 거부하고, 무엇을 표준화하고,<br>trust boundary를 어디에 두는지.
+<div class="spacer" style="flex:0.3"></div>
 
-> ### Pick yours.
+<p class="body" style="color:var(--muted);font-family:var(--font-serif);font-style:italic;text-align:center;">
+어느 것도 invent할 필요 없다. 흥미로운 일은 너의 문제 class에 어떤 pattern이 중요한지 고르고 &mdash; 나머지는 거부하는 것이다.
+</p>
 
-<br>
+<!--
+[발표 시 짚을 포인트]
+- 2026에 agent 만든다면, 이것이 floor (ceiling 아니라).
+- 각 항목이 aspirational feature가 아니라 현재의 expectation.
+- 10가지: streaming model+tool loop, schema validation tool registry, SKILL.md loader, AGENTS.md walk, compaction stage, permissions or sandbox, MCP support or 명시적 refusal, ACP server, durable session store, subagent affordance.
+- 어느 것도 invent할 필요 없다 — 다섯 project 중 최소 하나에 다 있고, 대부분은 모두에 있다.
+- 2026의 흥미로운 일: problem class에 맞는 pattern을 고르고 나머지는 거부하는 것.
+-->
 
-<div class="small muted">
-docs corpus: per-agent docs · comparison · research · references
+---
+
+<!-- _class: hero-slide -->
+
+<div class="eyebrow h-eyebrow-block">맺음</div>
+
+<p class="hero-text">
+Agents <em>agree</em> more than they disagree.<br />
+<span style="color:var(--muted);font-style:italic;font-size:0.7em;">남은 rift는 editorial &mdash;</span><br />
+<span style="color:var(--muted);font-style:italic;font-size:0.7em;">무엇을 거부하고, 무엇을 formalize하고,</span><br />
+<span style="color:var(--muted);font-style:italic;font-size:0.7em;">trust boundary를 어디에 그을지.</span>
+</p>
+
+<p style="font-family:var(--font-title);font-size:80px;margin-top:60px;color:var(--accent-1);">
+Pick yours.
+</p>
+
+<!--
+[발표 시 짚을 포인트]
+- Agents agree more than they disagree. Architecture는 settled.
+- 남은 rift들은 editorial — 무엇을 거부하고, 무엇을 formalize하고, trust boundary를 어디에 그을지, agent가 자기 자신을 편집해도 되는지.
+- 2026년 editorial 선택을 잘못 했을 때의 cost는 2022년이었다면의 cost보다 훨씬 작다 — 밑의 substrate가 훨씬 안정되어 있기 때문.
+- Pick yours.
+-->
+
+---
+
+<!-- _class: title-slide -->
+
+<div class="ribbon" style="margin:0 auto 40px;"></div>
+
+# <span style="text-align:center;display:block;">감사합니다.</span>
+
+<p class="subtitle" style="text-align:center;margin:0 auto;">질문, 반론, 거부 &mdash; 모두 환영합니다.</p>
+
+<div class="meta" style="justify-content:center;">
+  <span>Docs corpus &amp; references &mdash; 요청 시 제공</span>
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- thesis 재진술. agents agree more than they disagree.
-- architecture는 안정 상태에 도달했다. 남은 rift들 — 무엇을 거부하고, 무엇을 표준화하고, trust boundary를 어디에 두고, agent가 자기 자신을 수정해도 되는지 — 모두 capability 차이가 아니라 editorial 선택이다.
-- editorial 선택의 비용은 2022 대비 2026에 낮다. underlying substrate가 안정됐기 때문이다.
-- docs corpus 안내 (per-agent docs, comparison, research, references).
-- Q&A.
-
-[전달 메모]
-- 새로운 내용을 도입하지 않는다. thesis를 압축된 형태로 마무리하는 슬라이드다.
+- 감사합니다. 질문, 반론, 거부 — 모두 환영합니다.
+- Docs corpus: per-agent docs · comparison · research · references.
 -->
