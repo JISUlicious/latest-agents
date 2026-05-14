@@ -82,7 +82,7 @@ style: |
 
 # Modern AI Agents
 
-#### 어떻게 여기까지 왔고, 무엇이며, 어디서 갈리는가
+#### 역사, 구조, 그리고 editorial choices
 
 <br>
 
@@ -90,20 +90,20 @@ style: |
 
 <!--
 [발표 시 짚을 포인트]
-- 자기소개는 한 문장이면 충분. 이 talk 자체가 credential이다.
-- 시간 안내 — 35~40분 정도, 질문은 끝에 몰아서 받는다.
-- 한 줄 약속: 이 talk이 끝날 때쯤이면, 오늘날 AI agents가 왜 다르고 어떻게 골라야 하는지 감이 잡힐 거다.
-- AI 사전 지식은 필요 없다. 용어는 가는 길에 정의한다.
+- 자기소개는 한 문장. 이 talk 자체가 credential 역할을 한다.
+- 시간: 35~40분. 질문은 마지막에 받는다.
+- 목표: 이 talk이 끝날 때 오늘날의 AI agents가 무엇이 다르고 어떻게 골라야 하는지 정리할 수 있다.
+- AI 사전 지식은 필요 없다. 용어는 진행하면서 정의한다.
 
 [전달 메모]
-- 천천히 시작한다. 페이스는 후반으로 갈수록 올라간다.
+- 초반은 천천히. 후반으로 갈수록 페이스를 올린다.
 -->
 
 ---
 
 <!-- _class: lead -->
 
-## 30초 요약 — 세 흐름이 하나로
+## Agent의 역사 — 세 흐름의 수렴
 
 ```mermaid
 graph TD
@@ -118,43 +118,43 @@ graph TD
 
 <!--
 [발표 시 짚을 포인트]
-- AI agents는 하루아침에 등장한 단일 발명품이 아니다. 세 흐름이 거의 동시에 자랐고, 지금의 모습은 그 셋이 만나서 생긴 결과다.
-- 공통 기반은 두 가지뿐: Transformer architecture (2017)와 chat-model interface (ChatGPT, 2022).
-- 그 위에서 세 갈래가 병렬로 발전했다.
-  - 모델이 "생각"하는 법을 배웠다 → reasoning이 별도의 출력 channel이 됐다
-  - 모델이 "행동"하는 법을 배웠다 → tool use가 protocol이 됐다
-  - 분야 전체가 그 둘을 "엮어내는" 법을 표준화했다 → orchestration frameworks, 이어서 cross-vendor standards
-- 세 흐름이 모두 오늘의 "agents"로 수렴한다.
-- 이 도식이 곧 talk 전체의 roadmap이다. 각 branch가 이후 한 section에 해당한다.
+- 오늘날의 agents는 단일 발명품이 아니다. 세 갈래가 병렬로 발전한 결과다.
+- 공통 기반은 두 가지다. Transformer architecture (2017)와 chat-model interface (ChatGPT, 2022).
+- 그 위에 세 갈래가 거의 동시에 자랐다.
+  - reasoning이 별도의 출력 channel로 발전 (CoT → ReAct → o1 → R1)
+  - tool use가 protocol로 표준화 (WebGPT → Toolformer → function calling)
+  - 그 둘을 묶는 framework가 등장하고, 이어 cross-vendor standards로 정착 (LangChain → AutoGPT → MCP → ACP/SKILL.md/AGENTS.md)
+- 세 흐름이 오늘날의 agents로 수렴한다.
+- 이 도식이 talk의 전체 구조를 나타낸다. 각 branch가 이후 한 section에 대응한다.
 
 [전달 메모]
-- linear timeline이 아니라 diamond shape인 이유를 짚어주면 좋다. linear로 그리면 거짓말이 된다. CoT (2022.01)는 사실 ChatGPT (2022.11)보다 먼저였고, WebGPT (2021.12)는 더 먼저다. 세 갈래는 sequential이 아니라 parallel.
+- diamond 모양인 이유를 짚는다. linear timeline으로 그리면 사실과 맞지 않는다. CoT (2022.01)는 ChatGPT (2022.11)보다 먼저, WebGPT (2021.12)는 그보다 더 먼저다. 세 갈래는 순차가 아니라 병렬이다.
 -->
 
 ---
 
 <!-- _class: lead -->
 
-## 결론 먼저
+## Thesis
 
 <br>
 
-> ### 2026의 AI agents는<br>**합의한 것이 훨씬 많고**<br>**남은 차이는 *editorial*이다**
+> ### 2026의 AI agents는<br>**합의한 것이 더 많고**<br>**남은 차이는 *editorial*이다**
 
 <!--
 [발표 시 짚을 포인트]
-- punchline을 미리 던지는 슬라이드다. 청중이 어디로 가는지 알면 인지 부담이 크게 줄어든다.
-- "editorial"이 뭔지 한 문장으로 풀어준다. 각 project가 *무엇을 거부하는가*, *무엇을 표준화하는가*, *trust boundary를 어디에 긋는가*, *agent가 자기 자신을 수정해도 되는가*. 이게 editorial이다.
-- architecture는 안정화된 상태다. 남은 disagreement는 capability 차이가 아니라 *취향* 차이.
-- 이 슬라이드와 마지막 슬라이드 사이의 모든 슬라이드가 이 주장을 증명하는 과정이다.
+- talk의 결론을 먼저 제시한다. 청중이 도착 지점을 알면 인지 부담이 줄어든다.
+- "editorial"의 의미: 각 project가 *무엇을 거부하는가*, *무엇을 표준화하는가*, *trust boundary를 어디에 긋는가*, *agent가 자기 자신을 수정해도 되는가*에 대한 선택.
+- architecture는 안정됐다. 남은 disagreement는 capability 차이가 아니라 선택 차이다.
+- 이 슬라이드부터 슬라이드 23까지의 모든 내용이 이 주장을 뒷받침한다.
 
 [전달 메모]
-- 지금 defend하려고 하지 말 것. 나머지 슬라이드가 곧 defense다.
+- 지금 defense하지 않는다. 나머지 슬라이드가 defense다.
 -->
 
 ---
 
-# 모델, instruction을 따르기 시작하다
+# Completion에서 instruction으로
 
 <div class="cols-2">
 <div class="card">
@@ -167,7 +167,7 @@ graph TD
 
 <br>
 
-다음 단어를 예측하는<br>정교한 autocomplete
+다음 단어를 예측하는<br>autocomplete 모델
 
 </div>
 <div class="card blue">
@@ -185,29 +185,28 @@ graph TD
 
 <br>
 
-지시를 받아 처리하는 *partner*
+instruction을 받아 처리하는<br>chat 모델
 
 </div>
 </div>
 
 <div class="callout">
-scale + instruction tuning + RLHF — 2020-2022
+scale + instruction tuning + RLHF — 2020~2022
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- 2020년 이전의 language model은 사실상 정교한 autocomplete였다. 다음 단어를 예측하는 일이 전부였다.
-- GPT-3 (2020)에서 흥미로운 사실이 드러났다. scale이 충분히 커지면, 같은 machinery가 자연어로 쓰인 *지시*를 따라준다.
-- "completion engine"이 "지시를 따르는 agent"로 바뀐 건 세 가지가 합쳐진 결과다.
-  - **scale** — parameter도 많고 data도 많다
-  - **instruction tuning** — "지시받은 대로 답하라"는 예시로 fine-tune
-  - **RLHF** — 사람이 선호한 답을 reward로 학습
-- 핵심은 architecture가 바뀐 게 아니라는 것. *interface*가 바뀌었다. 모델의 형태는 그대로인데, 우리가 모델과 대화하는 방식이 달라졌다.
-- ChatGPT (2022.11.30)는 이 변화가 누구에게나 보이게 된 순간이다.
+- 2020년 이전의 language model은 다음 단어를 예측하는 autocomplete였다.
+- GPT-3 (2020)에서 한 가지가 확인됐다. scale이 충분히 커지면 같은 architecture가 자연어 instruction을 따른다.
+- 이 변화에는 세 가지가 작용했다.
+  - **scale** — parameter와 data 모두 한 자릿수 이상 증가
+  - **instruction tuning** — "instruction을 따르라"는 예시로 fine-tuning
+  - **RLHF** — 인간이 선호한 답을 reward로 학습
+- 변화의 본질은 architecture가 아니라 interface다. 모델 구조는 그대로, 사용자가 모델과 상호작용하는 방식이 달라졌다.
+- ChatGPT (2022.11.30)는 이 변화가 외부에 가시화된 시점이다.
 
 [전달 메모]
-- Transformer 내부나 scaling law는 깊이 들어가지 않는다.
-- 이 슬라이드는 단 하나의 shift만 짚는다: completion → instruction.
+- Transformer 내부 구조나 scaling law는 다루지 않는다. 이 슬라이드의 메시지는 하나다 — completion에서 instruction으로의 전환.
 -->
 
 ---
@@ -217,15 +216,15 @@ scale + instruction tuning + RLHF — 2020-2022
 <br>
 
 <div class="role-box">
-<span class="role">system:</span> 모델에게 주는 규칙 (보이지 않는다)
+<span class="role">system:</span> 모델에게 주는 규칙 (사용자에게 보이지 않음)
 </div>
 
 <div class="role-box">
-<span class="role">user:</span> 사용자가 입력하는 것
+<span class="role">user:</span> 사용자 입력
 </div>
 
 <div class="role-box">
-<span class="role">assistant:</span> 모델이 답하는 것
+<span class="role">assistant:</span> 모델 응답
 </div>
 
 <br>
@@ -236,21 +235,20 @@ scale + instruction tuning + RLHF — 2020-2022
 
 <!--
 [발표 시 짚을 포인트]
-- 모든 chat-tuned model이 같은 세 role을 쓴다. universal API다.
-- **system** = 보이지 않는 instruction (규칙, persona, "너는 helpful한 assistant다")
-- **user** = 사람이 입력하는 것
-- **assistant** = 모델이 답하는 것
-- 이 format은 OpenAI의 ChatGPT API (2023.03)에서 시작해 Anthropic, Google, Meta, Mistral, 모든 open-weight chat template이 그대로 따라갔다. cross-vendor의 lingua franca.
-- 이후 talk에서 다룰 모든 것 — tool use, reasoning, agents — 이 세 role frame 안에서 일어난다. 모든 게 통과하는 keyhole.
+- 모든 chat-tuned model이 동일한 세 가지 role을 사용한다. universal API다.
+- **system** — 사용자에게 보이지 않는 instruction (규칙, persona).
+- **user** — 사용자 입력.
+- **assistant** — 모델 응답.
+- OpenAI ChatGPT API (2023.03)에서 처음 도입된 format이 Anthropic, Google, Meta, Mistral, 그리고 모든 open-weight chat template로 확산됐다.
+- 이후 talk에서 다루는 tool use, reasoning, agents는 모두 이 세 role frame 안에서 일어난다.
 
 [전달 메모]
-- 여기가 vocabulary checkpoint다.
-- 이 슬라이드 다음부터는 "system prompt"나 "tool message" 같은 용어를 설명 없이 써도 된다.
+- 여기가 vocabulary checkpoint다. 이 슬라이드 이후로는 "system prompt", "tool message" 같은 용어를 별도 설명 없이 사용한다.
 -->
 
 ---
 
-# 모델, 생각하는 법을 익히다
+# Reasoning이 별도 output channel이 되다
 
 ```mermaid
 graph LR
@@ -262,24 +260,24 @@ graph LR
 ```
 
 <div class="callout">
-이제 모델은 두 채널을 따로 내놓는다 — final answer + thinking trace
+final answer와 thinking trace가 분리된 두 channel로 출력된다
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- "Reasoning"이라는 단어는 거창하게 들리지만, 실은 짧고 단순한 두 단계 이야기다.
-- **1단계 — prompt trick.** Wei et al. (2022.01)이 보여준 것: prompt에 reasoning을 풀어 쓴 example을 같이 넣으면, 모델이 그 style을 따라 하면서 math와 logic을 더 잘 푼다. Kojima et al. (2022.05)은 더 가벼운 사실을 보여줬다. "Let's think step by step" 한 줄만 붙여도 zero-shot으로 작동한다.
-- **2단계 — trained capability.** 2024.09 OpenAI o1. reinforcement learning으로 긴 internal reasoning을 *학습*한 모델이다. 2025.01 DeepSeek-R1이 open-weights로 o1 수준을 따라잡았고, 2025.02 Claude도 extended thinking을 추가했다.
-- 왜 중요한가? reasoning이 **별도의 출력 channel**이 됐다. 현대 모델은 private한 thinking trace와 final answer를 따로 내놓는다. 비용도 두 갈래, audience도 두 갈래 (개발자는 trace를 보고, 사용자는 답만 본다).
-- 메커니즘은 평범하다. token이 길어진다 = 문제당 더 많은 compute. 중간 "thinking"이 forward pass에 작업 공간을 만들어주고, context window를 working memory처럼 활용하게 한다.
+- reasoning 능력의 발전은 두 단계로 정리된다.
+- **1단계: prompt 기법.** Wei et al. (2022.01)이 worked-example 방식 (Chain-of-Thought)을 제안했다. prompt에 reasoning 예시를 포함하면 모델이 같은 형식으로 응답하면서 math/logic 성능이 향상된다. Kojima et al. (2022.05)은 더 단순한 방법을 보였다. "Let's think step by step"만 추가해도 zero-shot으로 같은 효과가 난다.
+- **2단계: trained capability.** 2024.09 OpenAI o1이 reinforcement learning으로 긴 internal reasoning을 학습한 첫 모델이다. 2025.01 DeepSeek-R1이 open-weights로 동급 성능을 재현했다. 2025.02 Claude가 extended thinking mode를 추가했다.
+- 결과: reasoning이 별도의 output channel로 분리됐다. 현대 모델은 thinking trace와 final answer를 별개로 출력하며, 각각의 비용과 용도가 다르다.
+- 메커니즘: 중간 token이 forward pass에 추가 compute를 제공하고, context window를 working memory처럼 사용하게 한다.
 
 [전달 메모]
-- 핵심은 *탈신비화*. Reasoning은 새로운 종류의 지능이 아니라, 같은 모델이 어려운 문제에 compute를 더 쓰는 것이다.
+- "reasoning"이 새로운 종류의 지능이 아니라, 같은 모델이 어려운 문제에 더 많은 compute를 할당하는 방식임을 강조한다.
 -->
 
 ---
 
-# 모델, 도구를 잡다 — tools
+# Tool use — 외부 환경 호출
 
 ```mermaid
 sequenceDiagram
@@ -292,7 +290,7 @@ sequenceDiagram
     Harness->>Tool: execute
     Tool-->>Harness: 62°F, foggy
     Harness->>Model: tool result
-    Model->>User: SF는 62°F, 안개가 끼었다
+    Model->>User: SF는 62°F, 안개가 있음
 ```
 
 <div class="callout">
@@ -301,21 +299,20 @@ Function calling — OpenAI, 2023.06.13
 
 <!--
 [발표 시 짚을 포인트]
-- 순서를 짚어보자. 사용자가 질문하면, 모델이 *structured* tool call을 emit한다. 자유 텍스트가 아니라 JSON 모양의 request다. harness가 실행하고, 결과가 돌아오고, 모델이 final answer를 만든다.
-- 결정적 날짜는 **2023.06.13** — OpenAI가 function calling을 ship한 날이다.
-- 그 전에는 prompt에 "JSON 형식으로 출력해줘"라고 적고 기도하는 수밖에 없었다. 그 이후로 모델은 tool call을 별도 API field로 *학습된 상태*로 내놓는다.
-- Anthropic이 따라왔고 (2023.11 beta → 2024.05 GA), Google도 2024년에 합류. 2024년 말이 되자 function calling은 사실상 기본 사양이 됐다.
-- tool이 작동하면 모델은 거의 무엇이든 쓸 수 있다 — shell, browser, file editor, database, API.
-- 이 단순한 cycle 하나 (model이 call → harness가 실행 → result 반환)가 모든 modern agent의 building block이 된다.
+- 흐름은 다음과 같다. 사용자가 질문하면, 모델이 structured tool call을 출력한다 (자유 텍스트가 아니라 JSON 형식의 request). harness가 실행하고, 결과를 받아, 모델이 final answer를 생성한다.
+- 결정적 시점: 2023.06.13 — OpenAI가 function calling을 공식 API로 제공한 날.
+- 그 이전에는 prompt에 "JSON 형식으로 출력"을 명시하고 모델 출력을 파싱했다. 그 이후로는 모델이 tool call을 별도 API field로 출력하도록 학습되어 있다.
+- Anthropic이 2023.11 beta로 도입하고 2024.05 GA, Google이 2024년에 합류했다. 2024년 말에는 모든 frontier API가 function calling을 지원한다.
+- tool이 정의되면 모델은 shell, browser, file editor, database, 임의의 API 등 외부 시스템을 호출할 수 있다.
+- 이 cycle — model call → harness execute → result return — 이 modern agent의 기본 단위다.
 
 [전달 메모]
-- 아직 "agent loop"라는 단어는 꺼내지 말 것. 다음 슬라이드에서 합친다.
-- 이 슬라이드는 한 번의 trip이다. 다음 슬라이드가 그걸 cyclical로 만든다.
+- "agent loop"이라는 용어는 아직 사용하지 않는다. 다음 슬라이드에서 cyclical 구조로 확장한다.
 -->
 
 ---
 
-# agent loop — 생각 · 행동 · 관찰
+# Agent loop — think · act · observe
 
 ```mermaid
 graph TD
@@ -326,24 +323,24 @@ graph TD
 
 <div class="callout">
 ReAct — Reasoning + Acting interleaved (Yao 2022)<br>
-한 바퀴 = 한 번의 model call
+한 cycle = 한 번의 model call
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- 이제 슬라이드 6 (think)과 슬라이드 7 (act)을 합친다. 모델이 생각하고, 행동하고, 결과를 관찰하고, 다시 생각한다. task가 끝날 때까지 반복한다.
-- 이 loop에 이름이 있다. **ReAct** — Reasoning + Acting의 줄임말이다. 2022년 Princeton/Google paper (Yao et al.).
-- 한 바퀴 = model call 한 번. harness가 loop을 돌리고, 모델이 멈출 시점을 결정한다.
-- 이게 **모든 modern AI agent의 spine**이다 — Claude Code, Cursor, ChatGPT with tools, AutoGPT, 모든 framework. surface는 달라도 loop은 같다.
-- 여기서부터 모든 슬라이드는 이 loop을 *구현*하거나 (9~14), *특성화*하거나 (17~19), *configure*한다 (20~22).
+- 슬라이드 6 (think)과 슬라이드 7 (act)을 결합한 형태다. 모델이 추론하고, 행동하고, 결과를 관찰하고, 다시 추론한다. task가 완료될 때까지 반복한다.
+- 이 loop의 이름은 ReAct (Reasoning + Acting)이다. Yao et al. (2022, Princeton/Google)이 도입했다.
+- 한 cycle = model call 한 번. harness가 loop을 제어하고, 모델이 종료 시점을 결정한다.
+- 이 구조가 모든 modern AI agent의 기본 형태다 — Claude Code, Cursor, ChatGPT with tools, AutoGPT, 모든 framework가 이 loop을 변형해서 사용한다.
+- 이후 슬라이드는 이 loop을 구현 (9-14), 특성화 (17-19), 또는 configure (20-22)하는 내용이다.
 
 [전달 메모]
-- 청중에게 이 도식을 가리키며 한 마디. "지금 캡처해두세요. 이 모양이 이후 모든 슬라이드에 나옵니다."
+- 이 도식을 청중이 기억하도록 한다. 이후 모든 슬라이드에 이 구조가 등장한다.
 -->
 
 ---
 
-# 2023 — "agent"가 단어가 된 해
+# 2023 — orchestration wave
 
 <div class="cols-2">
 <div>
@@ -352,7 +349,7 @@ ReAct — Reasoning + Acting interleaved (Yao 2022)<br>
 
 - **2022.10** — LangChain
 - **2022.11** — ChatGPT
-- **2023.03.30** — AutoGPT *(13일에 30K stars; 4월 말 100K)*
+- **2023.03.30** — AutoGPT *(13일 30K stars, 4월 말 100K)*
 - **2023.04.03** — BabyAGI
 - **2023.08** — AutoGen, MetaGPT
 - **2024.01** — CrewAI
@@ -361,41 +358,40 @@ ReAct — Reasoning + Acting interleaved (Yao 2022)<br>
 </div>
 <div class="card">
 
-연구 paper에서 product category까지<br>**~5-6개월**
+연구 paper에서 product category까지<br>**약 5~6개월**
 
 <br>
 
-AutoGPT는 "AI agent"가 비전문가 사이에서 단어가 된 순간
+AutoGPT 이후 "AI agent"가 비전문가에게도 알려진 용어로 자리잡음
 
 <br>
 
-다만, demo의 대부분은 cherry-pick.<br>2023년 가을이 되자 분위기는 *trough of disillusionment*로 뒤집힌다
+다만 신뢰성은 낮았고, 2023년 가을에는 *trough of disillusionment*로 평가가 전환
 
 </div>
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- agent loop이 연구 diagram에서 product category가 되기까지 약 5~6개월 — ReAct paper (2022.10) → AutoGPT (2023.03).
-- **LangChain** (Harrison Chase, 2022.10.24)이 widely-used orchestration framework의 첫 사례. ChatGPT보다 한 달 먼저 나왔지만, ChatGPT 등장 직후 폭발적으로 자랐다.
-- **AutoGPT** (Toran Bruce Richards, 2023.03.30)가 결정적 moment. 목표, memory, browsing, file editing이 다 들어 있는 "autonomous" agent다. 13일에 GitHub star 30K, 4월 말 100K — 당시 가장 빠르게 자란 open-source project.
-- 이때를 기점으로 "AI agent"는 CEO도 아는 단어가 됐다.
-- 뒤이어 **BabyAGI** (2023.04.03), **AutoGen** (Microsoft, 2023.08), **MetaGPT** (2023.08), **CrewAI** (2024.01) — multi-agent framework들이 layer로 쌓였다.
-- 솔직히 짚자면, AutoGPT demo의 상당수는 cherry-pick이다. 실제 run은 loop에 갇히고, hallucinate하고, 진짜 돈을 썼다. 2023년 가을이 되자 분위기는 "trough of disillusionment"로 돌아섰다.
+- agent loop이 연구 diagram에서 product category로 자리잡기까지 약 5~6개월이 걸렸다. ReAct paper (2022.10) → AutoGPT (2023.03).
+- **LangChain** (Harrison Chase, 2022.10.24)이 첫 번째 widely-used orchestration framework다. ChatGPT 한 달 전 출시됐고, ChatGPT 이후 빠르게 성장했다.
+- **AutoGPT** (Toran Bruce Richards, 2023.03.30)는 목표, memory, browsing, file editing을 갖춘 autonomous agent다. 13일 만에 GitHub star 30K, 4월 말 100K — 당시 가장 빠른 OSS 성장 속도.
+- 이 시점부터 "AI agent"라는 용어가 비전문가에게도 통용된다.
+- 이어 **BabyAGI** (2023.04.03), **AutoGen** (Microsoft, 2023.08), **MetaGPT** (2023.08), **CrewAI** (2024.01) 등 multi-agent framework가 layer로 추가됐다.
+- 실제 동작 면에서는 한계가 명확했다. loop이 중복되고, hallucination이 누적되고, token 비용이 높았다. 2023년 가을 무렵 평가가 hype에서 *trough of disillusionment*로 전환됐다.
 
 [전달 메모]
-- AutoGPT의 기여는 *technical*이 아니라 *cultural*이었다 — agent의 *모양*을 전 세계에 보여줬다.
-- 신뢰성 문제는 이후 2년이 더 걸렸다 (model 발전, tool API 정비, MCP).
+- AutoGPT의 기여는 technical보다 cultural이다 — agent의 *형태*를 대중에게 가시화했다. 신뢰성 개선은 이후 2년에 걸쳐 진행됐다 (모델 성능, tool API, MCP).
 -->
 
 ---
 
-# 그 시기가 남긴 것
+# Wave에서 남은 lesson
 
 <div class="cols-2">
 <div class="card">
 
-**살아남은 lesson**
+**12-Factor Agents**
 
 - Own your prompts
 - Own your context
@@ -403,47 +399,47 @@ AutoGPT는 "AI agent"가 비전문가 사이에서 단어가 된 순간
 
 <br>
 
-— *12-Factor Agents* 학파
+framework 추상화 뒤에 숨기지 않는다
 
 </div>
 <div class="card blue">
 
-**MCP, 그리고 마침표**
+**MCP의 정착**
 
 <br>
 
-framework war는 결국<br>**orchestration이 아니라**<br>**integration을 표준화하면서** 끝난다
+framework war는<br>**orchestration이 아니라**<br>**integration의 표준화**로 정리된다
 
 <br>
 
-— *2024.11*
+— 2024.11
 
 </div>
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- Orchestration framework (LangChain, AutoGen, CrewAI, MetaGPT)들이 2023년 내내 시끄러웠지만, 2024년쯤 되자 분위기가 정리된다. *framework들이 너무 over-abstract였고, orchestration layer는 사실 문제의 가장 작은 부분이다.*
-- 여기서 나온 production wisdom — "12-Factor Agents" 학파:
-  - **Own your prompts** — framework abstraction 뒤에 숨기지 말 것
-  - **Own your context** — 매 턴 무엇이 window에 들어갈지는 *네가* 결정
-  - **Own your control flow** — loop은 직접 써라. loop은 작다
-- framework war는 모두가 *orchestration*은 작고 *integration*이 크다는 데 동의하면서 끝났다. MCP (2024.11)가 표준화한 게 후자다 — agent와 tool을 어떻게 연결하느냐. agent를 어떻게 만드느냐가 아니라.
-- framework era에서 살아남은 건 **mental model**이다 (agent = loop + tools + memory + objective). framework 자체는 후퇴.
+- 2023년에 등장한 orchestration framework들 (LangChain, AutoGen, CrewAI, MetaGPT)에 대한 2024년의 일반적 평가는 다음과 같다. 추상화가 과도하고, orchestration layer는 문제의 작은 부분에 해당한다.
+- 12-Factor Agents 학파가 정리한 production wisdom:
+  - **Own your prompts** — framework 뒤에 prompt를 숨기지 않는다
+  - **Own your context** — context window에 무엇이 들어갈지 직접 결정한다
+  - **Own your control flow** — loop은 직접 구현한다
+- framework war는 orchestration layer가 작고 integration layer가 크다는 합의로 종료된다. MCP (2024.11)가 표준화한 것은 후자다 — agent와 tool의 연결 방식.
+- framework 자체보다 framework가 정립한 **mental model** (agent = loop + tools + memory + objective)이 남았다.
 
 [전달 메모]
-- 청중에게 한 마디: "agents를 이해하려고 LangChain을 배울 필요는 없습니다." pattern은 library를 초월한다.
+- LangChain 학습이 agents 이해의 전제조건은 아니다. pattern은 library 위 layer에 존재한다.
 -->
 
 ---
 
-# 모델을 조종하는 두 축
+# 모델 행동을 통제하는 두 축
 
 <div class="cols-2">
 <div class="card red">
 
 ### Constrain
-원치 않는 행동을 *막는다*
+원치 않는 행동을 차단
 
 <br>
 
@@ -455,7 +451,7 @@ framework war는 결국<br>**orchestration이 아니라**<br>**integration을 �
 <div class="card blue">
 
 ### Steer
-원하는 방향으로 *몰아간다*
+원하는 방향으로 유도
 
 <br>
 
@@ -468,25 +464,24 @@ framework war는 결국<br>**orchestration이 아니라**<br>**integration을 �
 </div>
 
 <div class="callout">
-지키라고 부탁하지 말고, 어길 능력 자체를 제거해라
+규칙을 prompt로 부탁하지 않고, 위반할 capability 자체를 제거한다
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- 강력한 generalist model을 어떻게 task에 붙들어두면서 — 동시에 trouble에서 떼어놓을까? 두 가지 보완적인 축이 있다.
-- **Constrain** (negative axis): 원치 않는 행동을 막는다. refusal training, output filter, sandbox, 위험한 action 직전의 permission prompt.
-- **Steer** (positive axis): 정해진 purpose 쪽으로 끌어간다. system prompt (agent의 직무 기술서), structured output (JSON schema 강제), tool denylist (위험한 tool은 *아예 빼버린다*), verdict contract ("PASS or FAIL로 끝내라").
-- 지난 1년 가장 인상적인 design move는 이거였다. **규칙을 부탁하지 말고, 어길 능력 자체를 빼버려라.** Claude Code의 read-only reviewer subagent에는 `Edit` tool이 *없다*. 규칙이 prompt 한 줄이 아니라 *부재한 capability*다. 모델이 literally 위반할 수가 없다.
-- 두 축이 함께 작동한다. sandbox는 *외부 세계*를 모델에게서 지키고, structural denylist는 *task*를 모델이 옆길로 새는 것에서 지킨다.
+- 모델을 task에 집중시키고 unwanted behavior로부터 보호하는 두 가지 축이 있다.
+- **Constrain** (negative axis) — 원치 않는 행동을 막는다. refusal training, output filter, sandbox, 위험한 action 전의 permission prompt.
+- **Steer** (positive axis) — 정해진 purpose 쪽으로 유도한다. system prompt (role definition), structured output (JSON schema enforcement), tool denylist (위험한 tool을 registry에서 제거), verdict contract ("PASS/FAIL로 종료").
+- 최근의 design 경향: prompt로 규칙을 명시하는 대신 모델이 위반할 capability 자체를 제거한다. 예를 들어 Claude Code의 read-only reviewer subagent에는 `Edit` tool이 등록되지 않는다. 규칙이 prompt 한 줄이 아니라 부재한 capability로 enforce된다.
+- 두 축의 역할 분담: sandbox는 외부 시스템을 모델로부터 보호하고, structural denylist는 task가 의도된 범위를 벗어나지 않도록 한다.
 
 [전달 메모]
-- 이게 deck에서 가장 중요한 *editorial* idea다.
-- 청중이 새 mental model 딱 하나만 가져간다면, 이걸 가져가야 한다. purpose는 prompt가 *말하는* 게 아니라 모델이 *가진* tool이 enforce한다.
+- 이 슬라이드에서 전달할 핵심 design idea — purpose는 prompt 문구가 아니라 모델이 가진 tool set으로 enforce된다.
 -->
 
 ---
 
-# 2024-2025, 표준이 자리잡은 12개월
+# 2024-2025, cross-vendor standards
 
 <div class="cols-4">
 <div class="card blue">
@@ -538,26 +533,25 @@ Anthropic<br>
 <br>
 
 <div class="callout">
-12개월에 cross-vendor standards 네 개
+12개월에 네 개의 cross-vendor standards
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- 12개월 안에 cross-vendor standard 네 개. 어떤 software 분야에서도 드문 일이고, AI에서는 사실상 전례가 없다.
-- **MCP** (Model Context Protocol, Anthropic, 2024.11.25): agent가 *tool과 data source*와 대화하는 protocol. 첫날부터 open-source. OpenAI가 2025.04에 채택했고, 2025.12에 Linux Foundation으로 donate.
-- **AGENTS.md** (2025 중반, OpenAI Codex CLI): project가 agent에게 자기 자신을 소개하는 plain Markdown 파일. Git처럼 project root → cwd로 walk한다. 2025년 말 Linux Foundation으로 donate; 2026년 초 기준 약 60K open-source project가 사용한다.
-- **ACP** (Agent Client Protocol, Zed, 2025.08.27): *editor*가 *agent*에게 말하는 방법. LSP가 language server에 한 역할을 ACP가 agent에 한다 — 어느 editor든 어느 agent에든 붙는다.
-- **SKILL.md** (Anthropic Claude Skills, 2025.10.16; agentskills.io 표준 2025.12.18): 어디서든 작동하는 capability bundle. Markdown + YAML frontmatter + optional script.
-- 각각이 minimal하다 — text 한 장이거나 JSON-RPC 한 줄. 그 단순함이 adoption을 마찰 없게 만들었다.
+- 12개월 동안 네 개의 cross-vendor standard가 도입됐다.
+- **MCP** (Model Context Protocol, Anthropic, 2024.11.25) — agent와 tool/data source 간 protocol. 첫날부터 open-source. OpenAI가 2025.04 채택, 2025.12 Linux Foundation으로 이관.
+- **AGENTS.md** (2025 중반, OpenAI Codex CLI) — project가 agent에게 context를 전달하는 Markdown 파일. Git처럼 project root → cwd 순으로 walk. 2025년 말 Linux Foundation으로 이관, 2026년 초 기준 약 60K open-source project가 사용.
+- **ACP** (Agent Client Protocol, Zed, 2025.08.27) — editor와 agent 간 protocol. LSP가 language server에 한 역할을 ACP가 agent에 수행한다.
+- **SKILL.md** (Anthropic Claude Skills, 2025.10.16; agentskills.io 표준 2025.12.18) — portable capability bundle. Markdown + YAML frontmatter + 선택적 script.
+- 각각이 minimal한 spec (text 한 장 또는 JSON-RPC 한 줄)이라는 점이 adoption 속도에 기여했다.
 
 [전달 메모]
-- adoption의 *규모*를 강조한다. 표준 네 개, 모든 major vendor (Anthropic, OpenAI, Google, Microsoft, Meta, 수십 개 CLI와 editor), 1년.
-- 우연이 아니다. field가 *준비된 상태*였다.
+- adoption 규모를 강조한다 — 네 개 standard, 모든 major vendor (Anthropic, OpenAI, Google, Microsoft, Meta), 수십 개 CLI와 editor, 1년 안에 정착.
 -->
 
 ---
 
-# 세 protocol, 세 layer — 각자 자기 일
+# 세 protocol, 세 layer
 
 <br>
 
@@ -573,7 +567,7 @@ Anthropic<br>
 
 ⬇️  MCP
 
-🔧 **Tools / Resources** *(server들)*
+🔧 **Tools / Resources** *(server)*
 
 </div>
 
@@ -582,25 +576,25 @@ Anthropic<br>
 <br>
 
 <div class="callout">
-LSP가 language server를 했다면, ACP는 agent를, MCP는 tool을 한다
+LSP가 language server에 한 역할 — ACP는 agent에, MCP는 tool에 수행
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- 세 protocol, 세 layer, 세 job. 각자 minimal하고 composable하다.
-- **Editor ↔ Agent: ACP.** Zed 같은 editor를 열었을 때, AI sidebar가 Claude Code와 통신하는 게 이것이다.
-- **Agent ↔ Tools: MCP.** agent가 GitHub를 검색하거나 database에 query를 날릴 때 쓰는 게 이것이다.
-- 2026년의 전형적인 setup은 이렇다. Zed (editor)가 Claude Code (agent)에 ACP로 말하고, Claude Code가 GitHub server, Postgres server, Slack server에 MCP로 말한다.
-- 어느 layer의 vendor도 다른 layer를 건드리지 않고 swap이 가능하다. LSP가 language server에서 했던 일과 같은 모양 — composable한 plumbing.
+- 세 protocol, 세 layer 구조다. 각 protocol은 minimal하고 composable하다.
+- **Editor ↔ Agent: ACP** — editor (Zed 등)와 agent (Claude Code 등) 간 통신.
+- **Agent ↔ Tools: MCP** — agent와 외부 tool/data (GitHub server, Postgres server 등) 간 통신.
+- 2026년의 일반적인 setup: Zed가 Claude Code에 ACP로 연결되고, Claude Code가 GitHub, Postgres, Slack server에 MCP로 연결된다.
+- 각 layer의 vendor는 인접 layer에 영향 없이 교체 가능하다. LSP가 language server에서 달성한 composability와 동일한 구조다.
 
 [전달 메모]
-- 청중이 LSP를 알면 (VS Code/Vim 등의 code intelligence를 가능하게 한 그 IDE↔language-server protocol) — analogy를 바로 가져다 쓴다. "ACP가 agent에 대해, LSP가 language server에 한 역할을 한다."
-- 모르는 청중이라면 두 surface를 그냥 묘사한다. "editor가 agent와 protocol 하나로 대화하고, agent가 tool과 또 다른 protocol로 대화한다."
+- 청중이 LSP를 알면 (VS Code/Vim의 code intelligence를 지원하는 protocol) 직접 비교한다. ACP가 agent에 대해, LSP가 language server에 한 역할.
+- LSP를 모르는 경우 단순 설명: "editor는 agent와 protocol A로 통신하고, agent는 tool과 protocol B로 통신한다."
 -->
 
 ---
 
-# Skill — 어디서든 도는 capability 파일
+# SKILL.md — portable capability format
 
 ```mermaid
 graph LR
@@ -621,23 +615,23 @@ vs
 
 </div>
 <div class="callout">
-같은 SKILL.md 파일이<br>Claude Code / Codex / Cursor /<br>OpenCode / Pi / Goose에서 그대로 돈다
+동일한 SKILL.md 파일이<br>Claude Code / Codex / Cursor /<br>OpenCode / Pi / Goose에서 동작
 </div>
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- Skill은 그냥 폴더다. 안에 `SKILL.md` 한 장 (Markdown + 두 줄짜리 YAML header: name + description + 자유 형식의 instruction)이 들어 있고, 옆에 `scripts/` 디렉터리가 있을 수도 있다.
-- 핵심 혁신은 **progressive disclosure** — 세 단계로 나뉜다.
-  - **Discovery**: startup 시점에 agent는 각 skill의 name과 description만 본다 (~100 token 정도씩).
-  - **Activation**: 모델이 skill이 필요하다고 판단하면, full body를 읽는다.
-  - **Execution**: body가 script나 template를 참조할 때만 그걸 연다.
-- 숫자로 보자. 30 skills × 100 tokens at startup ≈ 3K. 같은 30개를 eager load하면 ~60K tokens — *사용자가 한 글자 입력하기도 전에*. progressive disclosure가 수십 개 skill을 ship하는 걸 가능하게 만든다.
-- 같은 SKILL.md 파일이 Claude Code, Codex CLI, Cursor, OpenCode, Pi, Goose, 그리고 약 25개의 다른 tool에서 그대로 작동한다. 그냥 Markdown이니까.
-- 이게 이 분야에서 가장 깊은 interop story다 — *capability*까지 portable해졌다 (model만이 아니라).
+- Skill은 디렉터리 단위 구조다. `SKILL.md` 한 파일 (Markdown + 2줄 YAML header: name, description + instruction)이 필수, 선택적으로 `scripts/` 하위 디렉터리가 포함된다.
+- 핵심 메커니즘은 **progressive disclosure** — 3단계 로딩이다.
+  - **Discovery**: startup에 agent가 각 skill의 name과 description만 로드 (~100 tokens).
+  - **Activation**: 모델이 skill이 필요하다고 판단하면 full body를 읽는다.
+  - **Execution**: body가 script나 template를 reference하면 그 시점에 로드.
+- 비용 비교: 30개 skill × 100 tokens (discovery) ≈ 3K, 동일한 30개 eager load ≈ 60K tokens (사용자 입력 이전 시점). progressive disclosure가 다수의 skill을 ship 가능하게 한다.
+- 동일한 SKILL.md 파일이 Claude Code, Codex CLI, Cursor, OpenCode, Pi, Goose 외 약 25개 도구에서 호환된다. format이 plain Markdown이라는 점이 호환성의 조건이다.
+- capability layer의 portability는 model layer의 portability와 별개로 확보됐다.
 
 [전달 메모]
-- 강조: portability를 만든 건 minimalism이었다. Markdown은 상상할 수 있는 가장 평범한 format이고, 그래서 퍼졌다.
+- portability의 조건은 format의 단순함이다. Markdown은 최소 사양의 format이고, 그래서 광범위하게 채택됐다.
 -->
 
 ---
@@ -720,22 +714,21 @@ community
 
 <!--
 [발표 시 짚을 포인트]
-- 이 다섯이 talk 나머지의 grounding이다. 계속 돌아온다.
-- **claude-code** (Anthropic): reference implementation. 모든 게 markdown + frontmatter다. MCP-first. ~40개 built-in tool, layered permission, 사방에 hook.
-- **opencode** (SST): server-first. agent가 typed HTTP API 뒤에 살고, terminal UI는 client *중 하나*일 뿐이다. model catalog를 `models.dev`에서 live로 끌어온다.
-- **pi-mono** (Mario Zechner): tool 7개. *No* MCP, *no* subagent, *no* permission popup. 나머지는 다 extension. 원칙적으로 거부한다.
-- **hermes-agent** (Nous Research): self-improving. agent가 자기 memory를 편집하고 skill을 만든다. 동시에 다음 model을 위한 training environment.
-- **openclaw** (community): operator 한 명, 세 단계 Docker sandbox, multi-channel daemon. agent runtime으로 *pi-mono*를 그대로 embed한다.
-- 청중이 다섯을 외울 필요는 없다. 핵심은 *각자가 다른 editorial 선택을 했다는 것*. 그 선택이 다음 슬라이드 주제다.
+- 이후 talk이 다룰 다섯 agent project의 개요다.
+- **claude-code** (Anthropic) — reference implementation. 모든 확장이 markdown + frontmatter 기반. MCP first-class. 약 40개 built-in tool, layered permission, 다수의 hook.
+- **opencode** (SST) — server-first. agent가 typed HTTP API 뒤에서 동작하고, terminal UI는 multiple client 중 하나. model catalog를 `models.dev`에서 실시간 동기화.
+- **pi-mono** (Mario Zechner) — 7개 tool. MCP, subagent, permission popup 모두 제외. 그 외 기능은 extension으로 분리. 의도적으로 minimal.
+- **hermes-agent** (Nous Research) — self-improving. agent가 자체 memory를 편집하고 skill을 생성. 동시에 다음 model의 training environment 역할.
+- **openclaw** (community) — 단일 operator, 3단계 Docker sandbox, multi-channel daemon. agent runtime으로 pi-mono를 embed.
+- 다섯을 외울 필요는 없다. 핵심은 각각이 *다른 editorial 선택을 했다*는 점이다.
 
 [전달 메모]
-- canonical name보다는 *예시*로 land시킨다.
-- 이 project들이 representative하는 *선택*이 project 자체보다 중요하다.
+- canonical name이 아닌 *예시*로 다룬다. 각 project가 대표하는 선택이 project 자체보다 중요하다.
 -->
 
 ---
 
-# 다섯의 family tree
+# 다섯 agent의 cross-references
 
 ```mermaid
 graph TD
@@ -747,22 +740,21 @@ graph TD
 ```
 
 <div class="callout">
-표준이 실제로 동작한다는 증거 — ecosystem이 정말로 compose된다
+ecosystem이 compose된다는 실제 사례
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- ecosystem은 isolated된 project 다섯이 아니다. 서로 코드를 나눠 쓰고, format을 공유하고, 의존한다.
-- **openclaw**는 agent loop을 reinvent하지 않는다. pi-mono를 library로 import해서 그 위에 session lane, sandbox, multi-channel routing을 얹는다.
-- **hermes-agent**는 `hermes claw migrate`라는 명령어를 ship한다. 사용자의 `~/.openclaw` 디렉터리를 import한다. hermes는 openclaw에서 자라났다.
-- **opencode**는 `~/.claude/skills/`를 그대로 읽는다. provider-agnosticism이 *artifact*까지 확장됐다 (model만이 아니라).
-- **pi-skills** (community skill collection)는 다섯 agent용 install instruction과 함께 *동일한* SKILL.md 파일을 ship한다 — Pi, Codex, Amp, Droid, Claude Code.
-- **openclaw**는 ACP를 양방향으로 쓴다. IDE를 위한 ACP server인 동시에, `acpx` extension으로 Codex / Claude Code / Gemini CLI / OpenCode / Pi를 *nested child*로 *drive*한다.
-- 각 cross-reference가 **표준이 진짜고 ecosystem이 compose된다**는 증거다. "competition table"이 아니라 "family tree".
+- 다섯 project는 독립적이지 않다. 코드, format, dependency를 공유한다.
+- **openclaw**는 agent loop을 자체 구현하지 않는다. pi-mono를 library로 import하고 session lane, sandbox, multi-channel routing을 추가한다.
+- **hermes-agent**는 `hermes claw migrate` 명령어로 `~/.openclaw` 디렉터리를 import한다. hermes-agent는 openclaw에서 분기된 프로젝트다.
+- **opencode**는 `~/.claude/skills/`를 직접 읽는다. provider-agnosticism이 model에서 artifact 레벨로 확장됐다.
+- **pi-skills** (community skill collection)는 5개 agent용 install instruction과 함께 동일한 SKILL.md 파일을 배포한다 — Pi, Codex, Amp, Droid, Claude Code.
+- **openclaw**는 ACP를 양방향으로 사용한다. IDE용 ACP server이면서, `acpx` extension으로 Codex / Claude Code / Gemini CLI / OpenCode / Pi를 nested ACP child로 실행한다.
+- 각 cross-reference가 standards의 실제 동작과 ecosystem의 composability를 보여준다.
 
 [전달 메모]
-- 이 슬라이드가 다음에 나오는 universals 슬라이드의 근거가 된다.
-- 표준이 있다고 *말*하면서 실제 interop을 *보여주면*, abstraction이 credible해진다.
+- 이 슬라이드가 다음 universals 슬라이드의 근거다. 표준이 *말로만*이 아니라 *실제로* interop을 만든다는 점을 보여주면 abstraction이 구체화된다.
 -->
 
 ---
@@ -782,25 +774,24 @@ graph LR
 ```
 
 <div class="callout">
-multi-agent는 별도 platform이 아니다 — 같은 loop을 다르게 configure한 것
+multi-agent는 별도 platform이 아니라 동일 loop의 다른 configuration
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- 이게 분야에서 **가장 universal한 pattern**이다. 우리가 본 다섯 agent 전부에 걸쳐 있다.
-- 같은 `while (true) { call model; run tools }` loop. 위에 다른 policy: 다른 prompt, 다른 tool filter, 다른 permission context.
-- claude-code의 소스에서 *파일 하나* (`query.ts`)가 다음을 전부 처리한다 — interactive REPL, headless SDK call, 모든 종류의 subagent, remote session, background memory consolidation. 다 같은 loop의 configuration이다.
-- 구체적 예. "verify" subagent는 같은 loop이지만 mutating tool을 제거한 denylist + "구현을 깨뜨려봐라"는 prompt + "VERDICT: PASS or FAIL로 끝내라"는 contract가 붙는다. "explore" subagent는 같은 loop이지만 read-only tool만 쥐여준다.
-- Slogan: **multi-agent behavior는 별도 platform이 아니라, 같은 loop을 다르게 configure한 것이다.**
+- 다섯 agent에서 가장 공통적으로 나타나는 pattern이다.
+- 동일한 `while (true) { call model; run tools }` loop 위에 다른 policy (prompt, tool filter, permission context)가 적용된다.
+- claude-code의 경우 단일 파일 `query.ts`가 interactive REPL, headless SDK call, 모든 종류의 subagent, remote session, background memory consolidation을 모두 처리한다. 모두 동일 loop의 configuration이다.
+- 구체 예시: "verify" subagent는 동일 loop에 mutating tool을 제거한 denylist + "implementation을 break하라"는 prompt + "VERDICT: PASS or FAIL로 종료"라는 contract가 결합된 형태다. "explore" subagent는 동일 loop에 read-only tool만 노출한다.
+- 결론: multi-agent behavior는 별도 platform이 아니다. 동일 loop을 다르게 configure한 결과다.
 
 [전달 메모]
-- 이 말을 또박또박 천천히. "Subagent는 별도 engine이 아닙니다."
-- 듣는 사람의 다음 agent design을 바꿀 만한 insight다.
+- 이 명제를 명확하게 전달한다. "Subagent는 별도 engine이 아닙니다."
 -->
 
 ---
 
-# 다섯이 합의하는 것 — universals
+# 다섯이 합의하는 영역 — universals
 
 <div class="cols-2">
 <div>
@@ -824,23 +815,22 @@ multi-agent는 별도 platform이 아니다 — 같은 loop을 다르게 configu
 </div>
 
 <div class="callout">
-universals = 이제 더 이상 흥미롭지 않은 부분
+universals — designer가 더 이상 차이를 만들지 않는 영역
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- 이 여섯 pattern이 다섯 agent *전부*에서 나타난다. 더 이상 흥미롭지 않다 — 즉, designer들이 더 이상 differ하지 않는 곳.
-- **One loop, many policies** — 슬라이드 17의 finding.
-- **Methodology in prompts, not state** — code에 rigid한 "phase 1 / phase 2" state machine이 없다. model이 active sequencer고, runtime은 그 선택을 safe하게 만드는 역할.
-- **Compaction as control flow** — context window 관리가 특별한 feature가 아니라 매 턴의 일부다. (claude-code는 매 model call 직전에 다섯 단계 compaction을 돌린다.)
-- **Streaming + parallel tool execution** — tool이 model token output과 동시에 돌고, 한 턴에 여러 tool이 한꺼번에 dispatch된다.
+- 이 여섯 가지 pattern이 다섯 agent 모두에서 확인된다. 즉, designer 간 차이가 더 이상 발생하지 않는 영역이다.
+- **One loop, many policies** — 앞 슬라이드의 내용.
+- **Methodology in prompts, not state** — 코드에 rigid한 phase-based state machine이 없다. 모델이 sequencer 역할을 하고, runtime은 그 선택을 safe하게 만드는 역할만 한다.
+- **Compaction as control flow** — context window 관리가 별도 feature가 아니라 매 turn의 일부다. claude-code는 매 model call 전 다섯 단계의 compaction을 실행한다.
+- **Streaming + parallel tool execution** — model token output과 동시에 tool이 실행되고, 한 turn에 여러 tool이 병렬 dispatch된다.
 - **SKILL.md + AGENTS.md** — capability와 project context를 위한 cross-vendor 파일 convention.
 - **ACP for editors, MCP for tools** — 두 cross-vendor protocol.
-- "uninteresting" framing은 사실 positive한 이야기다. 안정된 foundation이 있어야 designer가 *흥미로운 차이*에 집중할 수 있다. 그게 다음 슬라이드 주제.
+- 이 영역의 안정화가 designer로 하여금 *흥미로운 차이*에 집중하게 한다. 다음 슬라이드 주제.
 
 [전달 메모]
-- 이 list는 가독성을 위해 추린 것이다.
-- universal이 더 있다 (recovery as control flow, prefix-cache discipline, pattern-rule permissions 등). 물어보면 언급한다.
+- 이 list는 가독성을 위해 선별한 것이다. 추가 universal (recovery as control flow, prefix-cache discipline, pattern-rule permissions 등)이 있으나 질문이 나오면 언급한다.
 -->
 
 ---
@@ -862,27 +852,27 @@ universals = 이제 더 이상 흥미롭지 않은 부분
 </table>
 
 <div class="callout">
-전부 architectural이 아니라 editorial — 한쪽을 택하면 나머지 결정이 따라온다
+모두 architectural이 아니라 editorial — 한쪽 선택이 나머지 결정을 결정한다
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- 다섯 agent가 structurally disagree하는 여섯 지점.
-- **Server-first vs binary-first.** agent가 daemon인가 (opencode, hermes, openclaw), single binary인가 (claude-code, pi-mono). multi-surface (mobile, IDE, chat)가 거의 공짜로 따라오는지를 결정한다.
-- **MCP load-bearing vs refused.** 다섯 중 셋이 MCP를 core에 넣었고, 둘은 명시적으로 거부한다 (pi-mono, openclaw). 거부는 ignorance가 아니라 *position*이다.
-- **Sandbox in core vs your problem.** openclaw는 세 단계 Docker sandbox를 ship한다. pi-mono는 명시적으로 user에게 떠넘긴다.
-- **Memory layered + curator vs none.** hermes-agent는 stale skill을 auto-archive하는 curator가 있는 4-layer memory. pi-mono는 learned memory가 0. claude-code는 그 중간.
-- **Subagents first-class vs refused.** claude-code는 ~6개의 built-in subagent type을 ship한다. pi-mono는 subagent를 완전히 거부한다.
-- **Multi-tenant vs one-operator.** openclaw는 *user 한 명, host 한 대*를 명시적으로 가정한다. 나머지는 implicit하게 multi-tenant.
-- 이 선택들은 right-or-wrong이 아니다 — *editorial*이다. 각 agent가 한쪽을 택하고, 그 선택이 나머지 결정 대부분을 예측한다.
+- 다섯 agent가 structurally disagree하는 여섯 축.
+- **Server-first vs binary-first** — agent가 daemon (opencode, hermes, openclaw)인지 single binary (claude-code, pi-mono)인지. multi-surface (mobile, IDE, chat) 지원의 비용을 결정한다.
+- **MCP load-bearing vs refused** — 셋이 core에 통합 (claude-code, opencode, hermes-agent), 둘이 명시적으로 제외 (pi-mono, openclaw). 제외는 ignorance가 아니라 design position이다.
+- **Sandbox in core vs your problem** — openclaw는 3단계 Docker sandbox를 ship, pi-mono는 sandbox를 사용자에게 위임한다.
+- **Memory layered + curator vs none** — hermes-agent는 stale skill을 auto-archive하는 curator가 있는 4-layer memory, pi-mono는 learned memory가 없다, claude-code는 중간.
+- **Subagents first-class vs refused** — claude-code는 약 6개 built-in subagent type, pi-mono는 subagent를 거부한다.
+- **Multi-tenant vs one-operator** — openclaw는 single user, single host를 명시적으로 가정, 나머지는 implicit multi-tenant.
+- 모두 right/wrong 판단의 문제가 아니다. editorial 선택이며, 한쪽 선택이 나머지 결정의 대부분을 예측한다.
 
 [전달 메모]
-- 위계를 암시하지 않도록 조심한다. "Refusal"이 negative하게 들릴 수 있지만, pi-mono가 MCP를 거부한 건 design goal에 부합하는 deliberate한 선택이다. openclaw가 agent hierarchy를 거부한 것도 마찬가지다.
+- 위계를 암시하지 않는다. refusal이 부정적으로 들릴 수 있으나, pi-mono의 MCP 거부, openclaw의 agent hierarchy 거부는 design goal에 부합하는 의도된 선택이다.
 -->
 
 ---
 
-# 2026의 AI agent — 표준 골격
+# 2026의 AI agent — canonical structure
 
 <br>
 
@@ -902,27 +892,27 @@ universals = 이제 더 이상 흥미롭지 않은 부분
 
 <div class="callout">
 streaming chat loop + tools + permissions + extensions —<br>
-prompt + tool filter + permission policy를 바꿔 여러 runtime으로 configure
+prompt + tool filter + permission policy 조합으로 multiple runtime을 구성
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- 모든 modern AI agent의 한 장짜리 도식이다.
-- **Surface** — 사람이 보는 곳 (terminal, IDE, chat app, mobile, web).
-- **Session** — durable한 conversation state. history와 compaction 포함.
-- **Loop** — 슬라이드 8의 recurring spine.
-- **Provider / Tools / Permissions** — model API, tool registry, agent가 무엇을 할 수 있는지에 대한 규칙.
+- 모든 modern AI agent의 layered structure다.
+- **Surface** — 사용자 접점 (terminal, IDE, chat app, mobile, web).
+- **Session** — durable conversation state, history와 compaction 포함.
+- **Loop** — 슬라이드 8의 agent loop.
+- **Provider / Tools / Permissions** — model API, tool registry, capability에 대한 rule set.
 - **Extensions** — MCP server, skill, plugin, agent-specific config.
-- 우리가 본 다섯 agent 전부 이 모양에 들어맞는다. 다른 건 *각 layer가 어떻게 build됐는가*이지, *layer가 있느냐 없느냐*가 아니다.
-- 한 줄 정의: *"streaming chat loop over a provider abstraction, with tools, permissions, and extensions — configurable into many runtimes by changing prompt + tool filter + permission policy."*
+- 다섯 agent 모두 이 structure에 부합한다. 차이는 *각 layer의 구현 방식*이지, *layer의 존재 여부*가 아니다.
+- 한 문장 정의: streaming chat loop over a provider abstraction, with tools, permissions, and extensions — configurable into many runtimes by changing prompt + tool filter + permission policy.
 
 [전달 메모]
-- 슬라이드 8의 loop을 다시 가리킨다. 같은 loop인데 이제 더 큰 stack에 embed된 모습이다.
+- 슬라이드 8의 loop과 연결한다. 동일 loop이 더 큰 stack 안에 위치한 모습이다.
 -->
 
 ---
 
-# 당신은 어떤 problem class에 있나
+# Problem class에 따른 pattern 선택
 
 ```mermaid
 graph TD
@@ -930,7 +920,7 @@ graph TD
     Q1 -->|Yes| Pi[pi-mono pattern<br/>refuse-and-eject]
     Q1 -->|No| Q2[Platform으로?]
     Q2 -->|Yes| CC[claude-code pattern<br/>layered platform]
-    Q2 -->|No| Q3[어디서든 돌게?<br/>mobile + IDE + web]
+    Q2 -->|No| Q3[어디서든 동작?<br/>mobile + IDE + web]
     Q3 -->|Yes| OPC[opencode pattern<br/>typed protocol]
     Q3 -->|No| Q4[Chat platform 위의<br/>personal assistant?]
     Q4 -->|Yes| OW[openclaw pattern<br/>single-operator gateway]
@@ -939,28 +929,27 @@ graph TD
 
 <!--
 [발표 시 짚을 포인트]
-- "Best" agent는 없다. 다섯 problem class에 다섯 pattern이 있을 뿐이다.
-- **혼자서 코딩, hand-buildable** → pi-mono pattern. tool 7개, no MCP, refuse-and-eject. simple, opinionated, fast.
-- **Coding agent를 platform으로** → claude-code pattern. layered platform, MCP-first, 모든 게 markdown + frontmatter. ecosystem을 염두에 둔다.
-- **어디서든 도는 coding agent** → opencode pattern. server-first, typed HTTP API, 여러 client (terminal, web, mobile, IDE).
-- **chat platform 위의 personal assistant** → openclaw pattern. single-operator gateway, multi-channel daemon, Docker-tiered sandbox.
-- **self-improving + training environment** → hermes-agent pattern. skill을 auto-archive하는 curator, trajectory generation을 위한 batch-runner. agent가 자기 자신의 training distribution이 된다.
-- 올바른 질문은 "어떤 agent가 best인가"가 아니다. **"내가 어떤 problem class에 있는가"** — 그 답이 pattern을 골라준다.
+- "best" agent는 존재하지 않는다. 다섯 problem class에 대응하는 다섯 pattern이 있다.
+- **혼자서 코딩, hand-buildable** → pi-mono pattern. tool 7개, no MCP, refuse-and-eject. 단순하고 opinionated하다.
+- **Coding agent를 platform으로** → claude-code pattern. layered platform, MCP-first, 모든 확장이 markdown + frontmatter 기반. ecosystem을 전제로 한다.
+- **어디서든 동작하는 coding agent** → opencode pattern. server-first, typed HTTP API, 다중 client (terminal, web, mobile, IDE).
+- **Chat platform 위의 personal assistant** → openclaw pattern. single-operator gateway, multi-channel daemon, Docker-tiered sandbox.
+- **Self-improving + training environment** → hermes-agent pattern. skill을 auto-archive하는 curator, trajectory generation을 위한 batch-runner. agent runtime이 자체 training distribution을 생성한다.
+- 적절한 질문은 "어떤 agent가 best인가"가 아니라 "어떤 problem class에 해당하는가"다. 그 답이 pattern을 결정한다.
 
 [전달 메모]
-- 여기서 deck이 thesis를 cash한다.
-- 슬라이드 19의 rift들이 *problem class와 correlate*한다 — 그래서 disagreement가 editorial이지 architectural이 아니라는 것.
+- 슬라이드 19의 rift들이 problem class와 상관관계를 가진다는 점이 thesis의 근거다. 따라서 disagreement가 architectural이 아니라 editorial로 정리된다.
 -->
 
 ---
 
-# 2026에 agent를 만든다면 — 기본 10가지
+# 2026 agent 구현 — 기본 요소 10가지
 
 <div class="cols-2">
 <div>
 
 1. Streaming chat loop
-2. Tool registry + schema 검증
+2. Tool registry + schema validation
 3. SKILL.md loader
 4. AGENTS.md walk
 5. Compaction stage
@@ -980,31 +969,30 @@ graph TD
 <br>
 
 <div class="callout">
-어느 것도 reinvent할 필요 없다 — 우리가 본 다섯 project 중 어딘가에는 다 있다<br>
-흥미로운 일은 <strong>너의 문제 class에 어떤 pattern이 중요한지 고르고, 나머지는 거부하는 것</strong>이다
+어느 것도 reinvent할 필요가 없다 — 다섯 project 중 최소 하나에 모두 구현되어 있다<br>
+의미 있는 작업은 <strong>problem class에 맞는 pattern을 선택하고 나머지를 제외하는 것</strong>이다
 </div>
 
 <!--
 [발표 시 짚을 포인트]
-- 2026에 처음부터 agent를 만든다면, 이 정도가 floor다.
-- 각 item이 **현재의 expectation**이지 aspirational feature가 아니다.
-- 10개를 짧게 짚어보면:
+- 2026년 시점에 agent를 신규 구현할 때 기본으로 요구되는 요소다.
+- 각 항목은 현재의 minimum requirement이며 future feature가 아니다.
+- 항목 요약:
   1. streaming model+tool loop
-  2. schema validation이 있는 tool registry
+  2. schema validation이 포함된 tool registry
   3. SKILL.md loader
-  4. cwd → root로 AGENTS.md walk
+  4. cwd에서 root로 AGENTS.md walk
   5. compaction stage
-  6. permissions OR sandbox
+  6. permissions 또는 sandbox
   7. MCP support 또는 명시적 refusal
   8. ACP server
   9. durable session store
   10. subagent affordance
-- 어느 것도 invent할 필요 없다. 우리가 본 다섯 project *최소 하나*에 다 있다 — 대부분은 *모두*에 있다.
-- 2026의 흥미로운 작업은 이걸 reinvent하는 게 아니다. **너의 problem class에 어떤 pattern이 중요한지 고르는 것**이다 — 그리고 나머지는 거부하는 것.
+- 어느 항목도 처음부터 invent할 필요는 없다. 다섯 project 중 최소 하나에 구현되어 있으며, 대다수 항목은 모든 project에 구현되어 있다.
+- 2026 시점의 의미 있는 작업은 reinvent가 아니라 **problem class에 맞는 pattern을 선택**하고 **나머지를 의도적으로 제외**하는 것이다.
 
 [전달 메모]
-- 여기서 짧게 한 호흡 멈춤. 이 슬라이드가 talk의 practical takeaway다.
-- 만들러 가는 사람이 있다면, 이 checklist를 가져가게 한다.
+- 이 슬라이드가 practical takeaway에 해당한다. 구현을 계획 중인 청중에게 checklist 역할을 한다.
 -->
 
 ---
@@ -1017,7 +1005,7 @@ graph TD
 
 > Agents agree more than they disagree.
 
-> 남은 차이는 *editorial*이다 —<br>무엇을 거부하고, 무엇을 표준화하고,<br>trust boundary를 어디에 긋는가.
+> 남은 차이는 *editorial*이다 —<br>무엇을 거부하고, 무엇을 표준화하고,<br>trust boundary를 어디에 두는지.
 
 > ### Pick yours.
 
@@ -1029,13 +1017,12 @@ docs corpus: per-agent docs · comparison · research · references
 
 <!--
 [발표 시 짚을 포인트]
-- 마지막으로 thesis를 다시. agents agree more than they disagree.
-- architecture는 settled. 남은 rift들 — 무엇을 거부하고, 무엇을 표준화하고, trust boundary를 어디에 긋고, agent가 자기 자신을 편집해도 되는지 — 다 capability가 아니라 *취향*의 문제다.
-- editorial 선택을 잘못 했을 때의 비용은 2022년보다 2026년이 훨씬 작다. 밑의 substrate가 훨씬 단단해졌으니까.
-- docs corpus 짧게 언급 (per-agent doc, comparison, research, references). 어디서 찾을 수 있는지.
-- 감사. 질문 받기.
+- thesis 재진술. agents agree more than they disagree.
+- architecture는 안정 상태에 도달했다. 남은 rift들 — 무엇을 거부하고, 무엇을 표준화하고, trust boundary를 어디에 두고, agent가 자기 자신을 수정해도 되는지 — 모두 capability 차이가 아니라 editorial 선택이다.
+- editorial 선택의 비용은 2022 대비 2026에 낮다. underlying substrate가 안정됐기 때문이다.
+- docs corpus 안내 (per-agent docs, comparison, research, references).
+- Q&A.
 
 [전달 메모]
-- 여기서 새 material 도입 금지.
-- 이 슬라이드의 job은 thesis를 청중이 들고 나갈 한 호흡으로 압축하는 것이다.
+- 새로운 내용을 도입하지 않는다. thesis를 압축된 형태로 마무리하는 슬라이드다.
 -->
