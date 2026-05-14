@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Modern AI Agents</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Geist:wght@300..700&family=Noto+Serif+KR:wght@300..700&family=Noto+Sans+KR:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" />
+
+<link rel="stylesheet" href="styles.css" />
+
+<script type="application/json" id="speaker-notes">
+[
+  "안녕하세요. 오늘 약 60분 정도 시간을 가지고 함께 이야기 나누겠습니다. 이 talk의 한 줄 약속은 단순합니다 — 끝나고 나면 오늘날의 AI agents가 왜 다른지, 그리고 그들 사이에서 어떻게 고를지 이해할 수 있게 될 것입니다. 사전 AI 배경 지식은 필요 없습니다. 용어는 진행하면서 정의합니다. Q&A는 마지막에 받겠습니다.",
+  "이게 30초 안에 들려드릴 전체 이야기입니다. AI agents는 하나의 발명에서 나오지 않았습니다. 세 갈래가 병렬로 자라났습니다. 공통 기반은 Transformer architecture (2017)와 chat-model interface (ChatGPT, 2022) 두 가지. 그 위에서 model이 '생각'을 배웠고, '행동'을 배웠고, 분야가 그것들을 '조율'하는 법을 배웠습니다. 이 세 갈래가 오늘날 'agents'라 부르는 것으로 수렴합니다. Talk 전체가 이 diamond을 펼쳐 보이는 일입니다.",
+  "결론을 먼저 말씀드리겠습니다. 2026년의 AI agents는 서로 합의한 것이 더 많고, 남은 차이는 editorial입니다. Architecture는 사실상 settled됐고, 남은 disagreement는 capability가 아니라 *취향*의 문제입니다 — 무엇을 거부할지, 무엇을 formalize할지, trust boundary를 어디에 그을지. 지금 punchline을 던지는 이유는, 청중이 어디로 가는지 알면 인지 부담이 줄어들기 때문입니다. 나머지 talk이 이 주장을 *증명*합니다.",
+  "전체 흐름의 지도입니다. 다섯 부분으로 나눠집니다. 어떻게 여기까지 왔는지, 그 위에 thought와 action이 어떻게 layer 되었는지, agents가 어떻게 category가 되었는지, 오늘날 우리가 쓰는 toolkit, 그리고 마지막으로 오늘날의 project들과 거기서 무엇을 배울 수 있는지. 역사는 빠르게, 현재 순간은 천천히 갑니다. 한 section만 기억하신다면, Part IV — patterns and rifts를 기억하세요.",
+  "",
+  "2020년 이전, language model은 정교한 autocomplete였습니다. 다음 단어를 예측하는 일. 그러다 2020년 GPT-3가 흥미로운 사실을 보여줬습니다 — scale이 충분하면, 같은 machinery가 자연어로 쓰인 instruction을 따르는 법을 학습한다는 것. 세 가지 ingredient가 결합되어 'completion engine'을 'follower of directives'로 바꿨습니다. 더 큰 scale, instruction tuning, 그리고 RLHF. Breakthrough는 architecture가 아니라 *interface*였습니다. Model의 모양은 그대로, 우리가 model과 대화하는 방식이 바뀐 거죠. 2022년 11월 30일, ChatGPT가 이것을 모두에게 보이게 만들었습니다.",
+  "모든 chat-tuned model은 — Claude, GPT, Gemini, Llama, 모든 open-weight chat template까지 — 같은 세 가지 message role을 씁니다. system은 보이지 않는 규칙. user는 사람이 입력하는 것. assistant는 model이 답하는 것. 이 format은 2023년 3월 OpenAI의 chat API에서 시작했고, 모든 vendor가 채택했습니다. 이것이 universal API입니다. Talk의 나머지 모든 것 — tool use, reasoning, agents — 이 세 role의 frame 안에서 일어납니다.",
+  "'Reasoning'은 마법처럼 들리지만 이야기는 짧고 평범합니다. 두 단계. Stage 1은 prompt trick이었습니다 — 2022년 초, 연구자들이 prompt에 reasoning example을 넣으면 model이 그 style을 imitate해서 math를 더 잘 푼다는 걸 발견했습니다. 몇 달 후 더 단순해졌습니다 — 그냥 'let's think step by step'이라고만 써도 zero-shot으로 작동. Stage 2는 training이었습니다. 2024년 OpenAI가 o1을 출시 — 답하기 전에 긴 reasoning을 만들도록 *명시적으로 학습된* model. 그리고 DeepSeek R1이 open weights로 동등한 성능을 보였고, Claude가 extended thinking을 추가했습니다. 핵심은 — reasoning이 이제 별도 output channel이 되었다는 점. Model은 private thinking trace + final answer 두 가지를 출력합니다.",
+  "이제 tool use를 따라가봅시다. 사용자가 질문을 합니다. Model은 답하는 대신 *structured* tool call을 emit합니다 — free text가 아니라 실제 JSON 형태의 request. Harness — model을 돌리는 program — 이 tool을 실행하고, 결과를 받아서, model에게 돌려줍니다. Model은 그 다음에 final answer를 만듭니다. 결정적 날짜는 2023년 6월 13일 — OpenAI가 function calling을 ship한 날. 그 전에는 prompt에 'JSON으로 출력해줘'라고 쓰고 기도해야 했습니다. 그 후에는 model이 tool call을 별도 API field로 학습된 채로 emit합니다. Anthropic이 따라왔고, Google이 따라왔고, 2024년 말 function calling은 table stakes가 되었습니다. 모든 modern agent가 이 단순한 cycle 위에 build됩니다.",
+  "이제 두 가지를 합쳐봅시다 — 몇 슬라이드 전의 thinking과 방금 본 acting. Model이 생각하고, 행동하고, 결과를 관찰하고, 다시 생각합니다. Task가 끝날 때까지 반복. 이 loop의 이름이 있습니다 — ReAct, Reasoning + Acting의 줄임말, 2022년 Princeton-Google paper에서 나왔습니다. 한 바퀴 = 한 번의 model call. 이 모양 — think, act, observe — 가 모든 modern AI agent의 spine입니다. Claude Code, Cursor, ChatGPT with tools, AutoGPT, 어떤 framework에서 읽으시든 같습니다. Surface는 달라도 loop은 같습니다. 스크린샷을 찍어두시기 바랍니다 — 이 모양이 이후 모든 슬라이드에 나옵니다.",
+  "이 모든 것이 production에서 어떻게 펼쳐졌는지 보겠습니다. ReAct paper (2022.10)에서 AutoGPT가 viral해진 (2023.03)까지 약 5개월. LangChain은 ChatGPT보다 한 달 먼저 나왔습니다. AutoGPT — 2023년 3월 30일 release — 는 13일 만에 GitHub 30,000 stars, 4월 말 100,000 stars. 당시 가장 빠르게 성장한 open source project였습니다. 이 순간 'AI agent'가 CEO도 아는 noun이 되었습니다. 그 다음 BabyAGI, Microsoft의 AutoGen, MetaGPT, CrewAI 등 wave. 솔직히, 대부분의 demo는 cherry-picked였습니다. 실제 run은 loop에 갇히고, hallucinate하고, 진짜 돈을 썼습니다. 2023년 가을, 논조가 disillusionment로 뒤집혔습니다.",
+  "그 disillusionment 위에 build된 것이 discipline이었습니다. Framework들은 2023년에 시끄러웠고, 2024년이 되자 consensus는 — framework들이 over-abstracted였고 orchestration layer가 사실 문제의 가장 작은 부분이라는 것. 그 위에서 자라난 wisdom이 '12-Factor Agents' 학파입니다. Own your prompts — framework abstraction 뒤에 숨기지 마세요. Own your context — 매 turn 무엇이 window에 들어갈지 *직접* 결정하세요. Own your control flow — loop는 직접 쓰세요. Loop는 작습니다. Framework wars는 모두가 orchestration layer가 작고 integration layer가 거대하다는 데 동의하면서 끝났습니다. MCP가 2024년 11월에 standardize한 것이 바로 후자입니다.",
+  "",
+  "강력한 generalist model을 어떻게 task에 집중시키고, trouble에서 멀어지게 할까요? 두 가지 보완적 축. 한쪽으로는 constrain — refusal training, output filter, sandbox, 위험한 action 전의 permission prompt. 다른 쪽으로는 steer — system prompt를 job description으로, structured output을 schema로 강제, tool denylist로 위험한 tool을 완전히 제거. 지난 1년 가장 흥미로운 design move는 이것입니다 — 구조적으로 enforce하라, 정중하게 부탁하지 말고. Claude Code의 read-only reviewer subagent에는 Edit tool이 *없습니다*. Rule이 prompt의 한 문장이 아니라 *없는 capability*. Model이 literally 위반할 수 없습니다. 한 가지 mental model만 가지고 나가신다면, 이것을 가지고 가세요.",
+  "12개월 안에 4개의 cross-vendor standard가 도착했습니다 — 어떤 software 분야에서도 드문 일이고, AI에서는 전례가 거의 없습니다. MCP, Anthropic의 Model Context Protocol, 2024년 11월, agent가 tool과 대화하는 방법. OpenAI가 5개월 후 채택했습니다. AGENTS.md는 project가 agent에게 자기 자신에 대해 알려주는 plain Markdown — Git처럼 project root에서 walk합니다. ACP, Zed의 2025년 8월 protocol, editor가 agent와 대화하는 방법. SKILL.md, Anthropic의 2025년 10월, 휴대 가능한 capability bundle. 각각이 minimal — text-shaped 혹은 JSON-RPC-shaped. 그 단순함이 adoption을 마찰 없게 만들었습니다.",
+  "세 protocol, 세 layer, 세 job. Editor는 ACP로 agent와 대화합니다. Agent는 MCP로 tool과 대화합니다. 2026년의 전형적 setup은 이렇습니다 — Zed라는 editor가 Claude Code에 ACP로 말하고, Claude Code가 GitHub server, Postgres server, Slack server에 MCP로 말합니다. 어느 layer의 vendor든 다른 layer를 건드리지 않고 swap 가능합니다. Language server에 대한 LSP와 같은 모양 — composable plumbing. LSP가 IDE의 code intelligence에 무엇을 했는지 아시는 분이라면, ACP는 agent에 대해 같은 일을 합니다.",
+  "Skill은 그냥 폴더입니다. 안에 Markdown 파일 — 두 줄짜리 YAML header (name + description). 옆에 scripts 디렉터리가 있을 수도 있습니다. 핵심 혁신은 progressive disclosure. 세 단계입니다. Startup 시점에 agent는 installed된 각 skill의 name과 description만 봅니다 — 각각 약 100 token. Model이 skill이 relevant하다고 판단하면, 그때 full body를 읽습니다. Body가 script를 reference하면, 그때만 agent가 그것을 엽니다. 계산은 brutal합니다 — 30 skills × 100 tokens at startup이면 3,000 tokens. 같은 30개를 eager load하면 60,000 tokens, 사용자가 한 글자도 입력하기 전에. 그래서 이 format이 퍼졌습니다. 같은 SKILL.md 파일이 Claude Code, Codex, Cursor, OpenCode, Pi, Goose, 그리고 ~25개의 다른 tool에서 작동합니다. 그냥 Markdown이니까요.",
+  "",
+  "이 다섯이 talk의 나머지가 기반으로 하는 agent들입니다. 계속 돌아올 테니, 한 번 이름을 호명하고 넘어가겠습니다. Anthropic의 claude-code — layered platform, MCP-first. SST의 opencode — server-first, typed HTTP API, terminal은 하나의 client일 뿐. Mario Zechner의 pi-mono — 7개 tool, MCP 거부, subagent 거부, permission popup 거부. Nous Research의 hermes-agent — self-improving, agent가 자기 memory를 편집. openclaw — 한 명의 operator, 세 단계 Docker sandbox, multi-channel daemon. 외우지 마세요. 핵심은 각각 다른 editorial 선택을 한다는 것입니다.",
+  "흥미로운 부분 — 이 project들은 isolated되어 있지 않습니다. 서로 code를 공유하고, format을 공유하고, 의존합니다. openclaw는 agent loop를 reinvent하지 않습니다 — pi-mono를 library로 import합니다. hermes-agent는 openclaw에서 자라났습니다 — openclaw directory를 import하는 migrate command를 ship합니다. opencode는 Claude Code의 skills directory를 직접 읽습니다. Community skill collection들은 다섯 개의 다른 agent용 install instruction과 함께 identical한 SKILL.md 파일을 ship합니다. openclaw는 ACP를 양방향으로 씁니다 — IDE를 위한 ACP server이자, Claude Code, Gemini CLI, OpenCode를 nested child로 drive합니다. 이것은 family tree이지 competition table이 아닙니다. 그리고 standards가 진짜라는 증거입니다.",
+  "",
+  "이제 제가 분야 전체에서 가장 중요한 universal pattern이라고 생각하는 것을 볼 차례입니다. 같은 loop — call model, run tools, repeat — 이 prompt를 바꾸고, 어떤 tool이 available한지를 바꾸고, permission context를 바꾸면 완전히 다른 behavior로 reconfigure됩니다. Claude Code의 source에서 하나의 파일이 interactive REPL, headless SDK call, 모든 종류의 subagent, remote session, background memory consolidation을 처리합니다. 모두 같은 loop의 configuration. 'verify' subagent는 mutating tool이 제거된 loop + '이것을 깨뜨려라'는 prompt. 'explore' subagent는 read-only tool만 있는 loop. Multi-agent behavior는 별도 platform이 아닙니다. 같은 loop을 reconfigure한 것입니다.",
+  "이 여섯 pattern이 우리가 본 다섯 agent *모두*에 나타납니다. 좋은 의미에서 더 이상 흥미롭지 않습니다 — designer들이 더 이상 differ하지 않는 곳이라는 뜻입니다. One loop, many policies — 방금 본 finding. Methodology가 state machine이 아니라 prompt에. Compaction이 optional feature가 아니라 매 turn의 일부. Streaming과 parallel tool execution. SKILL.md와 AGENTS.md를 cross-vendor 파일 format으로. Editor에는 ACP, tool에는 MCP. 'Uninteresting' framing은 positive입니다 — stable foundation이 있어야 designer들이 흥미로운 차이에 집중할 수 있습니다.",
+  "그리고 여기 흥미로운 차이들입니다. 다섯 agent 사이의 여섯 structural disagreement. Server-first냐 binary-first냐 — agent가 daemon이냐 single binary냐. MCP가 load-bearing이냐 거부냐 — 다섯 중 셋은 core에 build, 둘은 명시적으로 거부. Sandbox가 core에 있느냐 사용자 몫이냐. Memory가 curator와 함께 layered되어 있느냐 learned memory가 전혀 없느냐. Subagent가 first-class냐 완전히 거부냐. Multi-tenant냐 one-operator냐. 어느 것도 right-or-wrong이 아닙니다. 각각이 editorial 선택입니다 — 그리고 그 선택이 그 agent의 나머지 결정 대부분을 예측합니다.",
+  "",
+  "모든 modern AI agent의 한 도식, 한 번 그렸습니다. Surface — 사람이 보는 것. Session — durable한 conversation state. Loop — 앞서 그린 spine. Provider, tools, permissions — model API, tool registry, 규칙들. Extensions — MCP server, skill, plugin. 우리가 본 다섯 agent 모두 이 모양에 fit합니다. 다른 것은 각 layer가 *어떻게 build되었는가*입니다 — layer가 *있는지 여부*가 아니라. 한 문장으로: streaming chat loop over a provider abstraction, with tools, permissions, and extensions, configurable into many runtimes by changing prompt, tool filter, and permission policy.",
+  "'Best' agent는 없습니다. Problem class별 pattern이 있습니다. 혼자 코딩하는 엔지니어, hand-buildable — pi-mono pattern. Ecosystem을 위한 platform으로서의 coding agent — claude-code pattern. Everywhere에서 도는 coding agent — terminal, web, mobile, IDE — opencode pattern. Chat platform에서의 personal assistant — openclaw pattern. Self-improving + training environment — hermes-agent pattern. 옳은 질문은 '어떤 agent가 best인가'가 아닙니다. '내가 어떤 problem class에 있는가' — 그 답이 pattern을 고릅니다. 앞 슬라이드의 rift들이 problem class와 correlate한다는 것 — 그래서 disagreement가 editorial이지 architectural이 아닙니다.",
+  "2026에 agent를 만든다면, 이것이 floor입니다 — ceiling이 아니라 floor. 열 가지 항목, 각각 aspirational feature가 아니라 현재의 expectation입니다. Streaming model + tool loop. Schema validation이 있는 tool registry. SKILL.md loader. AGENTS.md walk. Compaction stage. Permissions 혹은 sandbox. MCP support 혹은 명시적 refusal. ACP server. Durable session store. Subagent affordance. 어느 것도 invent할 필요 없습니다 — 모두 우리가 본 다섯 project *최소 하나*에 있고, 대부분은 *모두*에 있습니다. 2026의 흥미로운 일은 이것들을 reinvent하는 것이 아닙니다. 너의 problem class에 어떤 pattern이 중요한지 고르는 것 — 그리고 나머지는 거부하는 것입니다.",
+  "그래서 — agents agree more than they disagree. Architecture는 settled. 남은 rift들은 editorial입니다 — 무엇을 거부할지, 무엇을 formalize할지, trust boundary를 어디에 그을지, agent가 자기 자신을 편집해도 되는지. 2026년에 editorial 선택을 잘못 했을 때의 cost는 2022년이었다면의 cost보다 훨씬 작습니다 — 밑의 substrate가 훨씬 안정되어 있기 때문입니다. Pick yours.",
+  "감사합니다. 질문, 반론, 거부 — 모두 환영합니다."
+]
+</script>
+
+<!-- React + Babel for the tweaks panel only — slides themselves are static HTML -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+
+<deck-stage width="1920" height="1080">
+
+  <!-- ═══════════════════════════════ 1 · Title ═══════════════════════════ -->
+  <section data-label="01 Title" class="title-slide">
+    <div class="ribbon"></div>
+    <h1><span>Modern</span> <span style="color:var(--accent-1);font-style:italic;">AI Agents</span></h1>
+    <p class="subtitle"><span>어떻게 여기까지 왔고, 무엇이며,</span><br /><span>무엇을 두고 다투는가.</span></p>
+    <div class="meta">
+      <span><b>60분 발표</b></span>
+      <span>·</span>
+      <span>입문자를 위한 기술 talk</span>
+      <span>·</span>
+      <span>2026년 5월</span>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 2 · The 30-second story ════════════════════ -->
+  <section data-label="02 Three threads">
+    <div class="eyebrow">30초 요약</div>
+    <h2 class="title">세 갈래, 하나의 수렴.</h2>
+
+    <div class="spacer"></div>
+
+    <svg viewBox="0 0 1680 660" style="width:100%;height:auto;max-height:640px;">
+      <!-- Trunk: Transformer -> ChatGPT -->
+      <g>
+        <rect x="710" y="20" width="260" height="88" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+        <text x="840" y="56" text-anchor="middle" class="label-title">Transformer</text>
+        <text x="840" y="92" text-anchor="middle" class="label-tiny">2017</text>
+
+        <line x1="840" y1="108" x2="840" y2="148" class="stroke" stroke-width="1.5" />
+
+        <rect x="710" y="148" width="260" height="88" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+        <text x="840" y="184" text-anchor="middle" class="label-title">ChatGPT</text>
+        <text x="840" y="220" text-anchor="middle" class="label-tiny">NOV 2022</text>
+
+        <!-- Three diverging lines -->
+        <path d="M 840 236 C 840 270, 280 270, 280 300" class="stroke-1" stroke-width="1.5" fill="none" />
+        <path d="M 840 236 L 840 300" class="stroke-1" stroke-width="1.5" />
+        <path d="M 840 236 C 840 270, 1400 270, 1400 300" class="stroke-1" stroke-width="1.5" fill="none" />
+      </g>
+
+      <!-- Three branch heads -->
+      <g>
+        <!-- Think -->
+        <text x="280" y="312" text-anchor="middle" class="label-accent">생각을 배웠다</text>
+        <rect x="80" y="332" width="400" height="200" rx="6" class="stroke fill-paper" stroke-width="1" />
+        <text x="280" y="372" text-anchor="middle" class="label-title">Reasoning</text>
+        <g class="annotation">
+          <text x="280" y="408" text-anchor="middle" class="label-muted">CoT · Jan 2022</text>
+          <text x="280" y="436" text-anchor="middle" class="label-muted">ReAct · Oct 2022</text>
+          <text x="280" y="464" text-anchor="middle" class="label-muted">o1 · Sep 2024</text>
+          <text x="280" y="492" text-anchor="middle" class="label-muted">R1 · Jan 2025</text>
+        </g>
+
+        <!-- Act -->
+        <text x="840" y="312" text-anchor="middle" class="label-accent">행동을 배웠다</text>
+        <rect x="640" y="332" width="400" height="200" rx="6" class="stroke fill-paper" stroke-width="1" />
+        <text x="840" y="372" text-anchor="middle" class="label-title">Tool use</text>
+        <g class="annotation">
+          <text x="840" y="408" text-anchor="middle" class="label-muted">WebGPT · Dec 2021</text>
+          <text x="840" y="436" text-anchor="middle" class="label-muted">Toolformer · Feb 2023</text>
+          <text x="840" y="464" text-anchor="middle" class="label-muted">Function calling · Jun 2023</text>
+          <text x="840" y="492" text-anchor="middle" class="label-muted">MCP · Nov 2024</text>
+        </g>
+
+        <!-- Coordinate -->
+        <text x="1400" y="312" text-anchor="middle" class="label-accent">조율을 배웠다</text>
+        <rect x="1200" y="332" width="400" height="200" rx="6" class="stroke fill-paper" stroke-width="1" />
+        <text x="1400" y="372" text-anchor="middle" class="label-title">Orchestration</text>
+        <g class="annotation">
+          <text x="1400" y="408" text-anchor="middle" class="label-muted">LangChain · Oct 2022</text>
+          <text x="1400" y="436" text-anchor="middle" class="label-muted">AutoGPT · Mar 2023</text>
+          <text x="1400" y="464" text-anchor="middle" class="label-muted">AGENTS.md · 2025</text>
+          <text x="1400" y="492" text-anchor="middle" class="label-muted">SKILL.md · 2025</text>
+        </g>
+      </g>
+
+      <!-- Converge -->
+      <g>
+        <path d="M 280 532 C 280 580, 840 580, 840 596" class="stroke-1" stroke-width="1.5" fill="none" />
+        <path d="M 840 532 L 840 596" class="stroke-1" stroke-width="1.5" />
+        <path d="M 1400 532 C 1400 580, 840 580, 840 596" class="stroke-1" stroke-width="1.5" fill="none" />
+
+        <rect x="640" y="596" width="400" height="56" rx="6" class="fill-1" />
+        <text x="840" y="630" text-anchor="middle" class="label-title" fill="var(--bg)" style="font-size:26px">오늘날의 agents · 2026</text>
+      </g>
+    </svg>
+  </section>
+
+  <!-- ═══════════════════════ 3 · Thesis preview ═════════════════════════ -->
+  <section data-label="03 Thesis" class="hero-slide">
+    <div class="eyebrow h-eyebrow-block">핵심 주장</div>
+    <p class="hero-text">
+      2026년의 AI agents는<br />
+      서로 <em>합의한</em> 것이 더 많고,<br />
+      <span style="color:var(--muted);font-style:italic;">남은 차이는 editorial이다.</span>
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 4 · Roadmap ════════════════════════════════ -->
+  <section data-label="04 Roadmap">
+    <div class="eyebrow">전체 흐름</div>
+    <h2 class="title">다섯 부분.</h2>
+    <p class="subtitle">역사에서 canon까지, 대체로 시간순.</p>
+
+    <div class="spacer"></div>
+
+    <div class="parts">
+      <div class="part-cell">
+        <div class="pn">Part I</div>
+        <div class="pt">어떻게 여기까지 왔는가</div>
+        <div class="ps">Completion engine에서 agent loop까지. 2017&ndash;2023.</div>
+      </div>
+      <div class="part-cell">
+        <div class="pn">Part II</div>
+        <div class="pt">조종과 modern toolkit</div>
+        <div class="ps">Steering, guardrail, 그리고 2024&ndash;2025에 도착한 네 가지 standards.</div>
+      </div>
+      <div class="part-cell">
+        <div class="pn">Part III</div>
+        <div class="pt">오늘날의 agents</div>
+        <div class="ps">다섯 project. 다섯 editorial 선택. 하나의 family tree.</div>
+      </div>
+      <div class="part-cell">
+        <div class="pn">Part IV</div>
+        <div class="pt">Patterns &amp; rifts</div>
+        <div class="ps">모두가 합의하는 것. 그래도 합의하지 못한 곳.</div>
+      </div>
+      <div class="part-cell">
+        <div class="pn">Part V</div>
+        <div class="pt">종합</div>
+        <div class="ps">Canonical shape. Picker. 2026의 floor.</div>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+  </section>
+
+  <!-- ═══════════════════════ 5 · Part I divider ═════════════════════════ -->
+  <section data-label="05 Part I divider" class="section-slide">
+    <div class="part-no">Part I</div>
+    <h2 class="part-title">어떻게 여기까지 왔는가.</h2>
+    <p class="part-blurb">Completion engine에서 agent loop까지.</p>
+    <div class="part-rule"></div>
+  </section>
+
+  <!-- ═══════════════════════ 6 · Predicting → conversation ══════════════ -->
+  <section data-label="06 Predicting to conversation">
+    <div class="eyebrow">Model이 지시를 따르는 법을 배웠다</div>
+    <h2 class="title">단어 예측에서 대화로.</h2>
+
+    <div class="spacer" style="flex:0.6"></div>
+
+    <div class="two-col" style="gap:60px;">
+      <!-- Before -->
+      <div>
+        <div class="col-head"><span class="dot" style="background:var(--muted);"></span><span>이전 · 2018</span></div>
+        <div class="card" style="font-family:var(--font-mono);font-size:calc(24px * var(--scale));line-height:1.6;">
+          <div style="color:var(--muted);font-size:calc(24px * var(--scale));letter-spacing:0.08em;text-transform:uppercase;margin-bottom:18px;">prompt</div>
+          <div>오늘 날씨는</div>
+          <div style="color:var(--accent-1);margin-top:14px;">→ 맑고 화창합니다. 기온은 약 18도이며…</div>
+          <div style="color:var(--muted);margin-top:22px;font-size:calc(24px * var(--scale));font-style:italic;font-family:var(--font-serif);">다음 단어를 예측. 계속.</div>
+        </div>
+      </div>
+
+      <!-- After -->
+      <div>
+        <div class="col-head"><span class="dot"></span><span>이후 · 2022</span></div>
+        <div class="card" style="font-family:var(--font-mono);font-size:calc(24px * var(--scale));line-height:1.6;">
+          <div style="color:var(--muted);font-size:calc(24px * var(--scale));letter-spacing:0.08em;text-transform:uppercase;margin-bottom:18px;">prompt</div>
+          <div>메일 정리해줘</div>
+          <div style="color:var(--accent-1);margin-top:14px;">→ 어떤 기준으로 정리할까요?</div>
+          <div style="color:var(--muted);margin-top:22px;font-size:calc(24px * var(--scale));font-style:italic;font-family:var(--font-serif);">지시를 따른다. 답한다.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="spacer" style="flex:0.4"></div>
+
+    <p class="small annotation" style="text-align:center;">
+      <span style="color:var(--accent-1);font-family:var(--font-label);letter-spacing:.08em;text-transform:uppercase;">+ scale&nbsp;&nbsp;·&nbsp;&nbsp;+ instruction tuning&nbsp;&nbsp;·&nbsp;&nbsp;+ RLHF</span>
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 7 · Three roles ════════════════════════════ -->
+  <section data-label="07 Chat model roles">
+    <div class="eyebrow">Chat model이란</div>
+    <h2 class="title">모든 chat model의 세 가지 role.</h2>
+
+    <div class="spacer" style="flex:0.5"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:80px;align-items:center;">
+      <!-- Stacked message frame -->
+      <svg viewBox="0 0 640 480" style="width:100%;height:auto;">
+        <rect x="20" y="20" width="600" height="124" rx="8" class="stroke fill-paper" stroke-width="1.5" />
+        <text x="50" y="58" class="label-accent">system</text>
+        <text x="50" y="102" class="label" style="font-size:26px;">model에게 주는 규칙</text>
+        <text x="50" y="132" class="label-muted">(사용자에게는 보이지 않음)</text>
+
+        <rect x="20" y="164" width="600" height="124" rx="8" class="stroke fill-paper" stroke-width="1.5" />
+        <text x="50" y="202" class="label-accent">user</text>
+        <text x="50" y="246" class="label" style="font-size:26px;">사용자가 입력하는 것</text>
+
+        <rect x="20" y="308" width="600" height="124" rx="8" class="fill-1" />
+        <text x="50" y="346" class="label-accent" style="fill:var(--bg);">assistant</text>
+        <text x="50" y="390" class="label" style="font-size:26px;fill:var(--bg);">model이 답하는 것</text>
+      </svg>
+
+      <!-- Right column -->
+      <div>
+        <p class="lede" style="margin-bottom:32px;">Universal API.</p>
+        <p class="body" style="color:var(--muted);max-width:600px;">
+          OpenAI가 2023년 3월에 도입.
+          Anthropic, Google, Meta, Mistral, 모든 open-weight chat template이 채택했다.
+          한 format, 모든 vendor.
+        </p>
+        <p class="body annotation" style="margin-top:32px;color:var(--accent-3);font-family:var(--font-serif);font-style:italic;">
+          이후의 모든 capability — tool, reasoning, agents — 가 이 세 role frame 안에 있다.
+        </p>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+  </section>
+
+  <!-- ═══════════════════════ 8 · Reasoning ══════════════════════════════ -->
+  <section data-label="08 Reasoning">
+    <div class="eyebrow">Model이 "생각"을 배웠다</div>
+    <h2 class="title">Reasoning이 별도 channel이 되었다.</h2>
+
+    <div class="spacer" style="flex:0.5"></div>
+
+    <svg viewBox="0 0 1680 360" style="width:100%;height:auto;">
+      <!-- 3 stages, horizontal -->
+      <g>
+        <rect x="40"   y="60" width="440" height="200" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+        <text x="260" y="106" text-anchor="middle" class="label-accent">Stage 1 · prompt trick</text>
+        <text x="260" y="156" text-anchor="middle" class="label-title">Chain of Thought</text>
+        <text x="260" y="198" text-anchor="middle" class="label-muted" style="font-family:var(--font-serif);font-style:italic;font-size:26px;">"Let's think step by step."</text>
+        <text x="260" y="230" text-anchor="middle" class="label-tiny">Wei · Kojima · 2022</text>
+      </g>
+
+      <g>
+        <line x1="500" y1="160" x2="600" y2="160" class="stroke-1" stroke-width="1.5" />
+        <path d="M 590 154 L 600 160 L 590 166" class="stroke-1" stroke-width="1.5" fill="none" />
+      </g>
+
+      <g>
+        <rect x="620" y="60" width="440" height="200" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+        <text x="840" y="106" text-anchor="middle" class="label-accent">Stage 2 · trained capability</text>
+        <text x="840" y="156" text-anchor="middle" class="label-title">Trained reasoners</text>
+        <text x="840" y="198" text-anchor="middle" class="label-muted">o1 · R1 · Claude extended thinking</text>
+        <text x="840" y="230" text-anchor="middle" class="label-tiny">2024.09 &mdash; 2025.02</text>
+      </g>
+
+      <g>
+        <line x1="1080" y1="160" x2="1180" y2="160" class="stroke-1" stroke-width="1.5" />
+        <path d="M 1170 154 L 1180 160 L 1170 166" class="stroke-1" stroke-width="1.5" fill="none" />
+      </g>
+
+      <g>
+        <rect x="1200" y="60" width="440" height="200" rx="6" class="fill-1" />
+        <text x="1420" y="106" text-anchor="middle" class="label-accent" style="fill:var(--bg)">오늘</text>
+        <text x="1420" y="156" text-anchor="middle" class="label-title" style="fill:var(--bg)">Thinking + Answer</text>
+        <text x="1420" y="198" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;opacity:.85;">두 개의 output channel</text>
+        <text x="1420" y="230" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;opacity:.65;letter-spacing:.06em;">PRIVATE TRACE · PUBLIC REPLY</text>
+      </g>
+    </svg>
+
+    <div class="spacer" style="flex:0.5"></div>
+
+    <p class="body annotation" style="color:var(--muted);max-width:1300px;font-family:var(--font-serif);font-style:italic;">
+      더 많은 token = 문제당 더 많은 compute. 중간 &ldquo;thoughts&rdquo;가 forward pass에 공간을 준다.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 9 · Tool use ═══════════════════════════════ -->
+  <section data-label="09 Tool use">
+    <div class="eyebrow">Model이 "행동"을 배웠다</div>
+    <h2 class="title">Protocol로서의 tool use.</h2>
+
+    <div class="spacer" style="flex:0.3"></div>
+
+    <svg viewBox="0 0 1680 520" style="width:100%;height:auto;max-height:540px;">
+      <!-- Three lifelines -->
+      <g class="stroke-line" stroke-width="1" stroke-dasharray="3 6">
+        <line x1="240"  y1="80" x2="240"  y2="500" />
+        <line x1="840"  y1="80" x2="840"  y2="500" />
+        <line x1="1440" y1="80" x2="1440" y2="500" />
+      </g>
+
+      <!-- Lane heads -->
+      <g>
+        <rect x="140"  y="36" width="200" height="56" rx="4" class="fill-paper stroke" stroke-width="1.5" />
+        <text x="240"  y="72" text-anchor="middle" class="label-title" style="font-size:26px">사용자</text>
+
+        <rect x="740"  y="36" width="200" height="56" rx="4" class="fill-1" />
+        <text x="840"  y="72" text-anchor="middle" class="label-title" style="font-size:26px;fill:var(--bg)">Model</text>
+
+        <rect x="1340" y="36" width="200" height="56" rx="4" class="fill-paper stroke-3" stroke-width="2" />
+        <text x="1440" y="72" text-anchor="middle" class="label-title" style="font-size:26px;fill:var(--accent-3)">Tool</text>
+      </g>
+
+      <!-- Step 1: user -> model -->
+      <g>
+        <line x1="240" y1="140" x2="836" y2="140" class="stroke" stroke-width="1.5" />
+        <path d="M 830 134 L 840 140 L 830 146" class="stroke" stroke-width="1.5" fill="none" />
+        <text x="540" y="128" text-anchor="middle" class="label" style="font-style:italic;font-family:var(--font-serif);font-size:26px">"SF 날씨 어때?"</text>
+      </g>
+
+      <!-- Step 2: model -> tool (structured) -->
+      <g>
+        <line x1="840" y1="220" x2="1436" y2="220" class="stroke-1" stroke-width="2" />
+        <path d="M 1430 214 L 1440 220 L 1430 226" class="stroke-1" stroke-width="2" fill="none" />
+        <text x="1140" y="208" text-anchor="middle" class="label" style="font-family:var(--font-mono);font-size:24px;fill:var(--accent-1)">get_weather(city: "SF")</text>
+        <text x="1140" y="244" text-anchor="middle" class="label-tiny annotation">structured tool call · free text 아님</text>
+      </g>
+
+      <!-- Step 3: tool -> model (result) -->
+      <g>
+        <line x1="1440" y1="320" x2="844" y2="320" class="stroke-3" stroke-width="2" />
+        <path d="M 850 314 L 840 320 L 850 326" class="stroke-3" stroke-width="2" fill="none" />
+        <text x="1140" y="308" text-anchor="middle" class="label" style="font-family:var(--font-mono);font-size:24px;fill:var(--accent-3)">{ temp: 62, conditions: "foggy" }</text>
+      </g>
+
+      <!-- Step 4: model -> user -->
+      <g>
+        <line x1="840" y1="420" x2="244" y2="420" class="stroke" stroke-width="1.5" />
+        <path d="M 250 414 L 240 420 L 250 426" class="stroke" stroke-width="1.5" fill="none" />
+        <text x="540" y="408" text-anchor="middle" class="label" style="font-style:italic;font-family:var(--font-serif);font-size:26px">"SF는 62°F에 안개가 있어요."</text>
+      </g>
+
+      <!-- Numbers -->
+      <g class="fill-muted">
+        <circle cx="60" cy="140" r="22" class="fill-1" />
+        <text x="60" y="146" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;font-weight:600;">1</text>
+        <circle cx="60" cy="220" r="22" class="fill-1" />
+        <text x="60" y="226" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;font-weight:600;">2</text>
+        <circle cx="60" cy="320" r="22" class="fill-1" />
+        <text x="60" y="326" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;font-weight:600;">3</text>
+        <circle cx="60" cy="420" r="22" class="fill-1" />
+        <text x="60" y="426" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;font-weight:600;">4</text>
+      </g>
+    </svg>
+
+    <div class="spacer"></div>
+
+    <p class="small annotation" style="text-align:center;">
+      <span style="color:var(--accent-1);font-family:var(--font-label);letter-spacing:.08em;text-transform:uppercase;">function calling · OpenAI · 2023년 6월 13일</span>
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 10 · The agent loop ════════════════════════ -->
+  <section data-label="10 Agent loop">
+    <div class="eyebrow">Think + Act + Observe</div>
+    <h2 class="title">Agent loop.</h2>
+
+    <div class="spacer" style="flex:0.3"></div>
+
+    <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:80px;align-items:center;">
+      <!-- Circular loop diagram -->
+      <svg viewBox="0 0 720 540" style="width:100%;height:auto;">
+        <!-- Outer ring -->
+        <circle cx="360" cy="270" r="200" class="stroke-line" stroke-width="1.5" fill="none" />
+
+        <!-- 3 node circles -->
+        <g>
+          <!-- Think (top) -->
+          <circle cx="360" cy="70" r="74" class="fill-1" />
+          <text x="360" y="64" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-title);font-size:30px;">Think</text>
+          <text x="360" y="92" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;letter-spacing:.06em;text-transform:uppercase;opacity:.8;">model</text>
+
+          <!-- Act (bottom-right) -->
+          <circle cx="533" cy="370" r="74" class="fill-3" />
+          <text x="533" y="364" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-title);font-size:30px;">Act</text>
+          <text x="533" y="392" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;letter-spacing:.06em;text-transform:uppercase;opacity:.8;">tool call</text>
+
+          <!-- Observe (bottom-left) -->
+          <circle cx="187" cy="370" r="74" class="fill-2" />
+          <text x="187" y="364" text-anchor="middle" style="fill:var(--fg);font-family:var(--font-title);font-size:30px;">Observe</text>
+          <text x="187" y="392" text-anchor="middle" style="fill:var(--fg);font-family:var(--font-label);font-size:24px;letter-spacing:.06em;text-transform:uppercase;opacity:.75;">result</text>
+        </g>
+
+        <!-- Arrows around the ring (clockwise: Think -> Act -> Observe -> Think) -->
+        <g class="stroke" stroke-width="2" fill="none">
+          <!-- Think -> Act -->
+          <path d="M 432 110 A 200 200 0 0 1 503 304" />
+          <path d="M 497 296 L 503 304 L 510 296" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Act -> Observe -->
+          <path d="M 458 408 A 200 200 0 0 1 262 408" />
+          <path d="M 270 414 L 262 408 L 272 400" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Observe -> Think -->
+          <path d="M 217 304 A 200 200 0 0 1 288 110" />
+          <path d="M 286 118 L 288 110 L 296 116" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+      </svg>
+
+      <!-- Right column -->
+      <div>
+        <p class="lede" style="margin-bottom:32px;">한 바퀴 = 한 번의 model call.</p>
+        <p class="body" style="color:var(--muted);max-width:600px;margin-bottom:28px;">
+          Model이 생각한다. Harness가 tool을 실행한다. 결과가 돌아온다. Model이 다시 생각한다. 끝날 때까지 반복.
+        </p>
+        <p class="body" style="font-family:var(--font-serif);font-style:italic;color:var(--accent-3);">
+          모든 modern agent의 spine. Claude Code, Cursor, AutoGPT, 모든 framework. Surface는 달라도 loop은 같다.
+        </p>
+        <p class="small" style="margin-top:36px;color:var(--accent-1);font-family:var(--font-label);letter-spacing:.08em;text-transform:uppercase;">
+          ReAct &mdash; Yao et al. &mdash; Oct 2022
+        </p>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+  </section>
+
+  <!-- ═══════════════════════ 11 · 2023 wave ═════════════════════════════ -->
+  <section data-label="11 Orchestration wave">
+    <div class="eyebrow">Orchestration framework wave</div>
+    <h2 class="title">2023 &mdash; agents가 viral해졌다.</h2>
+
+    <div class="spacer" style="flex:0.4"></div>
+
+    <div class="timeline">
+      <div class="pt above"><span class="lbl">LangChain</span><span class="date">2022.10</span></div>
+      <div class="pt below"><span class="lbl">ChatGPT</span><span class="date">2022.11</span></div>
+      <div class="pt above major"><span class="lbl">AutoGPT</span><span class="date">2023.03</span></div>
+      <div class="pt below"><span class="lbl">BabyAGI</span><span class="date">2023.04</span></div>
+      <div class="pt above"><span class="lbl">AutoGen</span><span class="date">2023.08</span></div>
+      <div class="pt below"><span class="lbl">CrewAI</span><span class="date">2024.01</span></div>
+      <div class="pt above major"><span class="lbl">MCP</span><span class="date">2024.11</span></div>
+    </div>
+
+    <div class="spacer" style="flex:0.4"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:32px;">
+      <div>
+        <div class="numeral" style="font-size:calc(120px * var(--scale));">100K</div>
+        <p class="small">2023년 4월 말 AutoGPT의 GitHub stars &mdash; release 후 몇 주.</p>
+      </div>
+      <div class="annotation" style="align-self:end;">
+        <p class="body" style="color:var(--muted);font-family:var(--font-serif);font-style:italic;">
+          연구 paper에서 product category까지 6개월. 대부분의 demo는 cherry-picked였지만, agent의 <em>모양</em>이 전 세계 청중에게 도달했다.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 12 · What the wave taught us ═══════════════ -->
+  <section data-label="12 Wave lessons">
+    <div class="eyebrow">Wave 이후</div>
+    <h2 class="title">Framework 대신, discipline.</h2>
+
+    <div class="spacer" style="flex:0.4"></div>
+
+    <div class="two-col">
+      <!-- Three ownership principles -->
+      <div>
+        <div class="col-head"><span class="dot"></span><span>남은 것</span></div>
+        <ol class="steps" style="margin-top:18px;">
+          <li><span><b style="font-family:var(--font-title);font-size:calc(40px * var(--scale));">Own your prompts.</b><br /><span style="color:var(--muted);font-size:calc(24px * var(--scale));">읽을 수 없는 abstraction 뒤에 숨기지 마라.</span></span></li>
+          <li><span><b style="font-family:var(--font-title);font-size:calc(40px * var(--scale));">Own your context.</b><br /><span style="color:var(--muted);font-size:calc(24px * var(--scale));">매 turn 무엇이 window에 들어갈지 직접 결정하라.</span></span></li>
+          <li><span><b style="font-family:var(--font-title);font-size:calc(40px * var(--scale));">Own your control flow.</b><br /><span style="color:var(--muted);font-size:calc(24px * var(--scale));">Loop는 직접 써라 &mdash; loop는 작다.</span></span></li>
+        </ol>
+      </div>
+
+      <!-- Resolution -->
+      <div style="align-self:center;">
+        <div class="col-head"><span class="dot alt"></span><span>전쟁이 끝난 방식</span></div>
+        <p class="lede" style="margin-top:18px;font-family:var(--font-serif);font-style:italic;line-height:1.25;">
+          모두가 <span style="color:var(--accent-1);">orchestration</span> layer는 작고,
+          <span style="color:var(--accent-1);">integration</span> layer는 거대하다는 데 동의했다.
+        </p>
+        <p class="body annotation" style="margin-top:36px;color:var(--muted);">
+          MCP가 2024년 11월에 integration layer를 standardize했다.
+          Framework 자체는 후퇴했다.
+        </p>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+  </section>
+
+  <!-- ═══════════════════════ 13 · Part II divider ═══════════════════════ -->
+  <section data-label="13 Part II divider" class="section-slide">
+    <div class="part-no">Part II</div>
+    <h2 class="part-title">조종과 modern toolkit.</h2>
+    <p class="part-blurb">Steering, guardrails, 그리고 12개월 안에 도착한 네 가지 standards.</p>
+    <div class="part-rule"></div>
+  </section>
+
+  <!-- ═══════════════════════ 14 · Steering ══════════════════════════════ -->
+  <section data-label="14 Steering">
+    <div class="eyebrow">Steering &amp; guardrailing</div>
+    <h2 class="title">Model을 조종하는 두 축.</h2>
+
+    <div class="spacer" style="flex:0.4"></div>
+
+    <div class="two-col">
+      <!-- Constrain -->
+      <div>
+        <div class="col-head" style="color:var(--accent-1);">
+          <span class="dot"></span><span>Constrain &mdash; 못 하게 막는다</span>
+        </div>
+        <ul class="bare" style="margin-top:18px;font-size:calc(28px * var(--scale));line-height:1.5;">
+          <li style="border-bottom:1px solid var(--line-soft);padding:18px 0;">Refusal training</li>
+          <li style="border-bottom:1px solid var(--line-soft);padding:18px 0;">Output filters</li>
+          <li style="border-bottom:1px solid var(--line-soft);padding:18px 0;">Sandbox &mdash; 세계가 read-only</li>
+          <li style="padding:18px 0;">위험한 action 전의 permission prompt</li>
+        </ul>
+      </div>
+
+      <!-- Steer -->
+      <div>
+        <div class="col-head" style="color:var(--accent-3);">
+          <span class="dot" style="background:var(--accent-3);"></span><span>Steer &mdash; 목적으로 유도</span>
+        </div>
+        <ul class="bare" style="margin-top:18px;font-size:calc(28px * var(--scale));line-height:1.5;">
+          <li style="border-bottom:1px solid var(--line-soft);padding:18px 0;">System prompt &mdash; job description</li>
+          <li style="border-bottom:1px solid var(--line-soft);padding:18px 0;">Structured output &mdash; schema 강제</li>
+          <li style="border-bottom:1px solid var(--line-soft);padding:18px 0;">Tool registry trimming</li>
+          <li style="padding:18px 0;">Verdict contracts &mdash; &ldquo;PASS or FAIL로 끝내라&rdquo;</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="spacer" style="flex:0.5"></div>
+
+    <p class="lede" style="text-align:center;font-family:var(--font-serif);font-style:italic;color:var(--accent-1);max-width:1400px;margin:0 auto;">
+      규칙을 따르라고 부탁하지 마라 &mdash; 위반할 능력을 제거하라.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 15 · 2024–2025 standards ═══════════════════ -->
+  <section data-label="15 Standards">
+    <div class="eyebrow">12개월</div>
+    <h2 class="title">네 가지 cross-vendor standards.</h2>
+
+    <div class="spacer" style="flex:0.4"></div>
+
+    <div class="standards-row">
+      <div class="std-card">
+        <div class="s-tag">Tool bridge</div>
+        <div class="s-name">MCP</div>
+        <div class="s-date annotation">Anthropic · 2024.11.25</div>
+        <div class="s-tagline">Agent가 tool과 data와 대화하는 방법.</div>
+      </div>
+      <div class="std-card">
+        <div class="s-tag">Project context</div>
+        <div class="s-name">AGENTS.md</div>
+        <div class="s-date annotation">OpenAI Codex CLI · 2025년 중반</div>
+        <div class="s-tagline">Project root에 있는 plain Markdown 파일.</div>
+      </div>
+      <div class="std-card">
+        <div class="s-tag">Editor bridge</div>
+        <div class="s-name">ACP</div>
+        <div class="s-date annotation">Zed · 2025.08.27</div>
+        <div class="s-tagline">Editor가 agent와 대화하는 방법.</div>
+      </div>
+      <div class="std-card">
+        <div class="s-tag">Capability artifact</div>
+        <div class="s-name">SKILL.md</div>
+        <div class="s-date annotation">Anthropic · 2025.10.16</div>
+        <div class="s-tagline">휴대 가능한 capability bundle &mdash; 같은 파일, 여러 agent.</div>
+      </div>
+    </div>
+
+    <div class="spacer" style="flex:0.4"></div>
+
+    <p class="body annotation" style="color:var(--muted);font-family:var(--font-serif);font-style:italic;text-align:center;">
+      각각 minimal &mdash; text-shaped 혹은 JSON-RPC-shaped. 그래서 adoption이 마찰 없었다.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 16 · Layered protocols ═════════════════════ -->
+  <section data-label="16 Layered protocols">
+    <div class="eyebrow">어떻게 맞물리는가</div>
+    <h2 class="title">세 protocol, 세 boundary.</h2>
+
+    <div class="spacer" style="flex:0.3"></div>
+
+    <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:80px;align-items:center;">
+      <div class="layered">
+        <div class="layer">
+          <div class="l-name">Editor</div>
+          <div class="l-sub">Zed · VS Code · &hellip;</div>
+        </div>
+        <div class="protocol-arrow">↕&nbsp;&nbsp;ACP</div>
+        <div class="layer accent">
+          <div class="l-name">Agent</div>
+          <div class="l-sub">Claude Code · OpenCode · &hellip;</div>
+        </div>
+        <div class="protocol-arrow">↕&nbsp;&nbsp;MCP</div>
+        <div class="layer">
+          <div class="l-name">Tools &amp; resources</div>
+          <div class="l-sub">GitHub · Postgres · Slack &hellip;</div>
+        </div>
+      </div>
+
+      <div>
+        <p class="lede" style="margin-bottom:32px;font-family:var(--font-serif);font-style:italic;">
+          각 layer가 minimal. 각 layer가 swappable.
+        </p>
+        <p class="body annotation" style="color:var(--muted);">
+          <b style="color:var(--fg);font-weight:500;">LSP</b>가 editor와 language server에 했던 것과 같은 모양 &mdash; composable plumbing.
+        </p>
+        <p class="body" style="margin-top:36px;color:var(--accent-3);font-family:var(--font-serif);font-style:italic;">
+          Editor를 swap, agent를 swap, tool server를 swap &mdash; 다른 둘은 알아채지 못한다.
+        </p>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+  </section>
+
+  <!-- ═══════════════════════ 17 · Skills on demand ══════════════════════ -->
+  <section data-label="17 Progressive disclosure">
+    <div class="eyebrow">Capability artifacts</div>
+    <h2 class="title">Skills는 필요할 때 load된다.</h2>
+
+    <div class="spacer" style="flex:0.3"></div>
+
+    <svg viewBox="0 0 1680 320" style="width:100%;height:auto;">
+      <g>
+        <rect x="40" y="60" width="400" height="200" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+        <text x="240" y="100" text-anchor="middle" class="label-accent">Stage 1</text>
+        <text x="240" y="148" text-anchor="middle" class="label-title">Discovery</text>
+        <text x="240" y="184" text-anchor="middle" class="label" style="font-size:24px;fill:var(--muted)">name + description만</text>
+        <text x="240" y="220" text-anchor="middle" class="label-tiny annotation">~100 tokens / skill</text>
+      </g>
+      <line x1="460" y1="160" x2="580" y2="160" class="stroke-1" stroke-width="1.5" />
+      <path d="M 570 154 L 580 160 L 570 166" class="stroke-1" stroke-width="1.5" fill="none" />
+
+      <g>
+        <rect x="600" y="60" width="400" height="200" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+        <text x="800" y="100" text-anchor="middle" class="label-accent">Stage 2</text>
+        <text x="800" y="148" text-anchor="middle" class="label-title">Activation</text>
+        <text x="800" y="184" text-anchor="middle" class="label" style="font-size:24px;fill:var(--muted)">full SKILL.md body 읽기</text>
+        <text x="800" y="220" text-anchor="middle" class="label-tiny annotation">필요할 때</text>
+      </g>
+      <line x1="1020" y1="160" x2="1140" y2="160" class="stroke-1" stroke-width="1.5" />
+      <path d="M 1130 154 L 1140 160 L 1130 166" class="stroke-1" stroke-width="1.5" fill="none" />
+
+      <g>
+        <rect x="1160" y="60" width="400" height="200" rx="6" class="fill-1" />
+        <text x="1360" y="100" text-anchor="middle" class="label-accent" style="fill:var(--bg)">Stage 3</text>
+        <text x="1360" y="148" text-anchor="middle" class="label-title" style="fill:var(--bg)">Execution</text>
+        <text x="1360" y="184" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;opacity:.85;">scripts &amp; templates 열기</text>
+        <text x="1360" y="220" text-anchor="middle" style="fill:var(--bg);font-family:var(--font-label);font-size:24px;opacity:.7;letter-spacing:.06em;">참조될 때만</text>
+      </g>
+    </svg>
+
+    <div class="spacer" style="flex:0.3"></div>
+
+    <!-- Token-cost callout -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:24px;align-items:center;">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:calc(40px * var(--scale));line-height:1.4;color:var(--fg);">
+          30&nbsp;skills × 100&nbsp;tokens<br /><span style="color:var(--accent-3);">≈ 3K tokens (startup)</span>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:calc(40px * var(--scale));line-height:1.4;color:var(--muted);text-decoration:line-through;text-decoration-color:var(--accent-1);">
+          30&nbsp;skills × 2K&nbsp;tokens<br /><span>≈ 60K tokens (eager load)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 18 · Part III divider ══════════════════════ -->
+  <section data-label="18 Part III divider" class="section-slide">
+    <div class="part-no">Part III</div>
+    <h2 class="part-title">오늘날의 agents.</h2>
+    <p class="part-blurb">다섯 project. 다섯 editorial 선택. 하나의 family tree.</p>
+    <div class="part-rule"></div>
+  </section>
+
+  <!-- ═══════════════════════ 19 · Five agents ═══════════════════════════ -->
+  <section data-label="19 Five agents">
+    <div class="eyebrow">등장 인물</div>
+    <h2 class="title">5개의 agent, 한 눈에.</h2>
+
+    <div class="spacer" style="flex:0.3"></div>
+
+    <div style="display:grid;grid-template-columns:repeat(5, 1fr);gap:32px;">
+      <div class="agent-card">
+        <div class="a-maker">Anthropic</div>
+        <div class="a-name">claude-code</div>
+        <div class="small annotation" style="color:var(--muted);">Terminal. ~40개 built-in tool. MCP-first. 모든 곳의 hook.</div>
+        <div class="a-quote">"Layered platform."</div>
+      </div>
+      <div class="agent-card">
+        <div class="a-maker">SST</div>
+        <div class="a-name">opencode</div>
+        <div class="small annotation" style="color:var(--muted);">Server-first. Typed HTTP API. Terminal은 하나의 client.</div>
+        <div class="a-quote">"Typed protocol surface."</div>
+      </div>
+      <div class="agent-card">
+        <div class="a-maker">M. Zechner</div>
+        <div class="a-name">pi-mono</div>
+        <div class="small annotation" style="color:var(--muted);">7개 tool. No MCP. No subagent. No permission popup.</div>
+        <div class="a-quote">"Refuse-and-eject minimalism."</div>
+      </div>
+      <div class="agent-card">
+        <div class="a-maker">Nous Research</div>
+        <div class="a-name">hermes-agent</div>
+        <div class="small annotation" style="color:var(--muted);">Self-improving. 자기 memory를 편집. 자기 skill 생성.</div>
+        <div class="a-quote">"Self-improving training environment."</div>
+      </div>
+      <div class="agent-card">
+        <div class="a-maker">Community</div>
+        <div class="a-name">openclaw</div>
+        <div class="small annotation" style="color:var(--muted);">한 operator. 3단계 Docker sandbox. Multi-channel daemon.</div>
+        <div class="a-quote">"Single-operator gateway."</div>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <p class="body annotation" style="text-align:center;color:var(--muted);font-family:var(--font-serif);font-style:italic;">
+      다섯을 외울 필요는 없다. 각각이 다른 editorial 선택을 한다 &mdash; 그게 핵심.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 20 · Family tree ═══════════════════════════ -->
+  <section data-label="20 Family tree">
+    <div class="eyebrow">Ecosystem이 compose된다</div>
+    <h2 class="title">Family tree.</h2>
+
+    <div class="spacer" style="flex:0.2"></div>
+
+    <svg viewBox="0 0 1680 580" style="width:100%;height:auto;">
+      <!-- Nodes — 3 rows × 2 cols (asymmetric), no edge crossings -->
+      <g>
+        <!-- Row 1 -->
+        <rect x="60"  y="40" width="320" height="104" rx="8" class="stroke fill-paper" stroke-width="1.5" />
+        <text x="220" y="96"  text-anchor="middle" class="label-title">claude-code</text>
+        <text x="220" y="132" text-anchor="middle" class="label-tiny">Anthropic</text>
+
+        <rect x="700" y="40" width="320" height="104" rx="8" class="stroke fill-paper" stroke-width="1.5" />
+        <text x="860" y="96"  text-anchor="middle" class="label-title">opencode</text>
+        <text x="860" y="132" text-anchor="middle" class="label-tiny">SST</text>
+
+        <!-- Row 2 -->
+        <rect x="700" y="238" width="320" height="104" rx="8" class="fill-3" />
+        <text x="860" y="294" text-anchor="middle" class="label-title" style="fill:var(--bg)">openclaw</text>
+        <text x="860" y="330" text-anchor="middle" class="label-tiny" style="fill:var(--bg);opacity:.75;">community</text>
+
+        <rect x="1280" y="238" width="320" height="104" rx="8" class="stroke-1 fill-paper" stroke-width="2" />
+        <text x="1440" y="294" text-anchor="middle" class="label-title">hermes-agent</text>
+        <text x="1440" y="330" text-anchor="middle" class="label-tiny">Nous Research</text>
+
+        <!-- Row 3 -->
+        <rect x="60"  y="436" width="320" height="104" rx="8" class="fill-1" />
+        <text x="220" y="492" text-anchor="middle" class="label-title" style="fill:var(--bg)">pi-mono</text>
+        <text x="220" y="528" text-anchor="middle" class="label-tiny" style="fill:var(--bg);opacity:.75;">M. Zechner</text>
+
+        <rect x="700" y="436" width="320" height="104" rx="8" class="stroke fill-paper" stroke-width="1.5" />
+        <text x="860" y="492" text-anchor="middle" class="label-title">5개 nested agents</text>
+        <text x="860" y="528" text-anchor="middle" class="label-tiny">Codex · Gemini CLI · …</text>
+      </g>
+
+      <!-- Edges with labels -->
+      <g class="stroke-1" stroke-width="1.5" fill="none">
+        <!-- claude-code → opencode : SKILL.md 채택 -->
+        <line x1="380" y1="92" x2="700" y2="92" />
+        <path d="M 692 87 L 700 92 L 692 97" stroke-linecap="round"/>
+
+        <!-- pi-mono → openclaw : embedded by (diagonal up-right) -->
+        <path d="M 380 488 C 540 488, 580 290, 700 290" />
+        <path d="M 692 285 L 700 290 L 692 295" stroke-linecap="round"/>
+
+        <!-- openclaw → hermes-agent : evolved into -->
+        <line x1="1020" y1="290" x2="1280" y2="290" />
+        <path d="M 1272 285 L 1280 290 L 1272 295" stroke-linecap="round"/>
+
+        <!-- openclaw → 5 nested agents : ACP로 drive (down) -->
+        <line x1="860" y1="342" x2="860" y2="436" />
+        <path d="M 855 428 L 860 436 L 865 428" stroke-linecap="round"/>
+      </g>
+
+      <!-- Edge labels -->
+      <g class="annotation">
+        <text x="540"  y="80"  text-anchor="middle" class="label-tiny" style="fill:var(--accent-1);">SKILL.md adopted by</text>
+        <text x="540"  y="396" text-anchor="middle" class="label-tiny" style="fill:var(--accent-1);">embedded by</text>
+        <text x="1150" y="278" text-anchor="middle" class="label-tiny" style="fill:var(--accent-1);">evolved into</text>
+        <text x="880"  y="396" class="label-tiny" style="fill:var(--accent-1);">drives via ACP</text>
+      </g>
+    </svg>
+
+    <div class="spacer" style="flex:0.3"></div>
+
+    <p class="body annotation" style="text-align:center;color:var(--accent-3);font-family:var(--font-serif);font-style:italic;">
+      Standards는 진짜다. Ecosystem이 compose된다.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 21 · Part IV divider ═══════════════════════ -->
+  <section data-label="21 Part IV divider" class="section-slide">
+    <div class="part-no">Part IV</div>
+    <h2 class="part-title">Patterns &amp; rifts.</h2>
+    <p class="part-blurb">다섯이 모두 합의하는 것. 그래도 합의하지 못한 곳.</p>
+    <div class="part-rule"></div>
+  </section>
+
+  <!-- ═══════════════════════ 22 · One loop, many policies ═══════════════ -->
+  <section data-label="22 One loop many policies">
+    <div class="eyebrow">Universal pattern</div>
+    <h2 class="title">One loop. Many policies.</h2>
+
+    <div class="spacer" style="flex:0.2"></div>
+
+    <svg viewBox="0 0 1680 580" style="width:100%;height:auto;">
+      <!-- Center hub: the loop -->
+      <circle cx="840" cy="290" r="180" class="stroke" stroke-width="2" fill="var(--paper)" />
+      <text x="840" y="270" text-anchor="middle" class="label-title" style="font-size:34px;">while&nbsp;true:</text>
+      <text x="840" y="312" text-anchor="middle" class="label-title" style="font-size:24px;fill:var(--muted)">call model</text>
+      <text x="840" y="346" text-anchor="middle" class="label-title" style="font-size:24px;fill:var(--muted)">run tools</text>
+
+      <!-- Four spokes -->
+      <g class="stroke-1" stroke-width="1.5" fill="none">
+        <line x1="668" y1="200" x2="280" y2="80"  />
+        <line x1="668" y1="380" x2="280" y2="500" />
+        <line x1="1012" y1="200" x2="1400" y2="80" />
+        <line x1="1012" y1="380" x2="1400" y2="500"/>
+      </g>
+
+      <!-- Four reconfigurations -->
+      <g>
+        <rect x="40"   y="20"  width="430" height="124" rx="6" class="fill-paper stroke" stroke-width="1" />
+        <text x="60"   y="58"  class="label-accent">prompt A</text>
+        <text x="60"   y="88"  class="label" style="font-size:24px;fill:var(--muted);font-style:italic;font-family:var(--font-serif);">all tools</text>
+        <text x="60"   y="124" class="label-title" style="font-size:26px;">Interactive coding</text>
+
+        <rect x="40"   y="436" width="430" height="124" rx="6" class="fill-paper stroke" stroke-width="1" />
+        <text x="60"   y="474" class="label-accent">prompt B</text>
+        <text x="60"   y="504" class="label" style="font-size:24px;fill:var(--muted);font-style:italic;font-family:var(--font-serif);">read-only tools</text>
+        <text x="60"   y="540" class="label-title" style="font-size:26px;">Subagent: explore</text>
+
+        <rect x="1210" y="20"  width="430" height="124" rx="6" class="fill-paper stroke" stroke-width="1" />
+        <text x="1230" y="58"  class="label-accent">prompt C</text>
+        <text x="1230" y="88"  class="label" style="font-size:24px;fill:var(--muted);font-style:italic;font-family:var(--font-serif);">denylist mutators</text>
+        <text x="1230" y="124" class="label-title" style="font-size:26px;">Subagent: verify</text>
+
+        <rect x="1210" y="436" width="430" height="124" rx="6" class="fill-paper stroke" stroke-width="1" />
+        <text x="1230" y="474" class="label-accent">prompt D</text>
+        <text x="1230" y="504" class="label" style="font-size:24px;fill:var(--muted);font-style:italic;font-family:var(--font-serif);">background · no user</text>
+        <text x="1230" y="540" class="label-title" style="font-size:26px;">Memory consolidation</text>
+      </g>
+    </svg>
+
+    <div class="spacer" style="flex:0.3"></div>
+
+    <p class="lede" style="text-align:center;font-family:var(--font-serif);font-style:italic;color:var(--accent-3);">
+      Multi-agent는 별도 platform이 아니다. 같은 loop을 다르게 configure한 것이다.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 23 · Universals ════════════════════════════ -->
+  <section data-label="23 Universals">
+    <div class="eyebrow">Universals &mdash; 더 이상 흥미롭지 않은 것</div>
+    <h2 class="title">다섯이 모두 합의하는 것.</h2>
+
+    <div class="spacer" style="flex:0.3"></div>
+
+    <div class="checklist">
+      <div class="check-item"><span class="ck">✓</span><span>One loop, many policies</span></div>
+      <div class="check-item"><span class="ck">✓</span><span>Methodology가 prompt에, state에 아니라</span></div>
+      <div class="check-item"><span class="ck">✓</span><span>Compaction이 control flow의 일부</span></div>
+      <div class="check-item"><span class="ck">✓</span><span>Streaming + parallel tool execution</span></div>
+      <div class="check-item"><span class="ck">✓</span><span>SKILL.md + AGENTS.md as artifacts</span></div>
+      <div class="check-item"><span class="ck">✓</span><span>ACP for editors, MCP for tools</span></div>
+    </div>
+
+    <div class="spacer" style="flex:0.4"></div>
+
+    <p class="body annotation" style="color:var(--muted);font-family:var(--font-serif);font-style:italic;max-width:1300px;">
+      &ldquo;Uninteresting&rdquo;은 positive &mdash; stable foundation이 있어야 designer들이 흥미로운 차이에 집중할 수 있다.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 24 · Rifts ═════════════════════════════════ -->
+  <section data-label="24 Rifts">
+    <div class="eyebrow">Rifts &mdash; editorial 선택이 사는 곳</div>
+    <h2 class="title">그래도 합의하지 못한 곳.</h2>
+
+    <div class="spacer" style="flex:0.2"></div>
+
+    <div class="rifts">
+      <div class="l">Server-first</div>     <div class="mid">vs</div> <div class="r">Binary-first</div>
+      <div class="row-line"></div>
+      <div class="l">MCP load-bearing</div> <div class="mid">vs</div> <div class="r">명시적 거부</div>
+      <div class="row-line"></div>
+      <div class="l">Sandbox in core</div>  <div class="mid">vs</div> <div class="r">Sandbox는 너의 문제</div>
+      <div class="row-line"></div>
+      <div class="l">Memory + curator</div> <div class="mid">vs</div> <div class="r">Learned memory 없음</div>
+      <div class="row-line"></div>
+      <div class="l">Subagents first-class</div> <div class="mid">vs</div> <div class="r">Subagent 거부</div>
+      <div class="row-line"></div>
+      <div class="l">Multi-tenant</div>     <div class="mid">vs</div> <div class="r">One-operator</div>
+    </div>
+
+    <div class="spacer" style="flex:0.4"></div>
+
+    <p class="body annotation" style="color:var(--muted);font-family:var(--font-serif);font-style:italic;text-align:center;">
+      Right-or-wrong이 아니다. 각 agent가 한쪽을 택한다 &mdash; 그 선택이 나머지 결정 대부분을 예측한다.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 25 · Part V divider ════════════════════════ -->
+  <section data-label="25 Part V divider" class="section-slide">
+    <div class="part-no">Part V</div>
+    <h2 class="part-title">종합.</h2>
+    <p class="part-blurb">Canonical shape. Picker. 2026의 floor.</p>
+    <div class="part-rule"></div>
+  </section>
+
+  <!-- ═══════════════════════ 26 · Canonical shape ═══════════════════════ -->
+  <section data-label="26 Canonical shape">
+    <div class="eyebrow">2026년의 AI agent란</div>
+    <h2 class="title">Canonical shape.</h2>
+
+    <div class="spacer" style="flex:0.3"></div>
+
+    <svg viewBox="0 0 1680 320" style="width:100%;height:auto;">
+      <g>
+        <rect x="20"   y="60" width="300" height="200" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+        <text x="170"  y="100" text-anchor="middle" class="label-accent">Layer 1</text>
+        <text x="170"  y="148" text-anchor="middle" class="label-title">Surface</text>
+        <text x="170"  y="186" text-anchor="middle" class="label" style="font-size:24px;fill:var(--muted);">terminal · IDE · chat</text>
+
+        <rect x="350"  y="60" width="300" height="200" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+        <text x="500"  y="100" text-anchor="middle" class="label-accent">Layer 2</text>
+        <text x="500"  y="148" text-anchor="middle" class="label-title">Session</text>
+        <text x="500"  y="186" text-anchor="middle" class="label" style="font-size:24px;fill:var(--muted);">history · compaction</text>
+
+        <rect x="680"  y="60" width="300" height="200" rx="6" class="fill-1" />
+        <text x="830"  y="100" text-anchor="middle" class="label-accent" style="fill:var(--bg)">Layer 3</text>
+        <text x="830"  y="148" text-anchor="middle" class="label-title" style="fill:var(--bg)">Loop</text>
+        <text x="830"  y="186" text-anchor="middle" style="font-size:24px;fill:var(--bg);font-family:var(--font-label);opacity:.85;">think · act · observe</text>
+
+        <rect x="1010" y="60" width="300" height="200" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+        <text x="1160" y="100" text-anchor="middle" class="label-accent">Layer 4</text>
+        <text x="1160" y="148" text-anchor="middle" class="label-title" style="font-size:24px;">Provider · Tools</text>
+        <text x="1160" y="182" text-anchor="middle" class="label-title" style="font-size:24px;">· Permissions</text>
+        <text x="1160" y="216" text-anchor="middle" class="label" style="font-size:24px;fill:var(--muted);">policy</text>
+
+        <rect x="1340" y="60" width="300" height="200" rx="6" class="stroke fill-paper" stroke-width="1.5" />
+        <text x="1490" y="100" text-anchor="middle" class="label-accent">Layer 5</text>
+        <text x="1490" y="148" text-anchor="middle" class="label-title">Extensions</text>
+        <text x="1490" y="186" text-anchor="middle" class="label" style="font-size:24px;fill:var(--muted);">MCP · skills · plugins</text>
+
+        <!-- Arrows between layers -->
+        <g class="stroke-1" stroke-width="1.5" fill="none">
+          <line x1="320" y1="160" x2="350" y2="160" /><path d="M 342 154 L 350 160 L 342 166" stroke-linecap="round"/>
+          <line x1="650" y1="160" x2="680" y2="160" /><path d="M 672 154 L 680 160 L 672 166" stroke-linecap="round"/>
+          <line x1="980" y1="160" x2="1010" y2="160" /><path d="M 1002 154 L 1010 160 L 1002 166" stroke-linecap="round"/>
+          <line x1="1310" y1="160" x2="1340" y2="160" /><path d="M 1332 154 L 1340 160 L 1332 166" stroke-linecap="round"/>
+        </g>
+      </g>
+    </svg>
+
+    <div class="spacer" style="flex:0.4"></div>
+
+    <p class="lede" style="font-family:var(--font-serif);font-style:italic;color:var(--accent-3);max-width:1500px;line-height:1.25;">
+      Streaming chat loop over a provider abstraction &mdash; with tools, permissions, and extensions &mdash; 여러 runtime으로 configurable.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 27 · Problem class ═════════════════════════ -->
+  <section data-label="27 Problem class">
+    <div class="eyebrow">문제에 맞는 pattern을 골라라</div>
+    <h2 class="title">어떤 문제 class에 있는가?</h2>
+
+    <div class="spacer" style="flex:0.3"></div>
+
+    <div class="branches">
+      <div class="branch">
+        <div class="q"><b>혼자 코딩</b>, hand-buildable</div>
+        <div class="ar">→</div>
+        <div class="a">pi-mono pattern</div>
+      </div>
+      <div class="branch">
+        <div class="q">Ecosystem을 위한 <b>platform</b>으로서의 coding agent</div>
+        <div class="ar">→</div>
+        <div class="a">claude-code pattern</div>
+      </div>
+      <div class="branch">
+        <div class="q"><b>Everywhere</b>에서 도는 coding agent &mdash; terminal, web, IDE, mobile</div>
+        <div class="ar">→</div>
+        <div class="a">opencode pattern</div>
+      </div>
+      <div class="branch">
+        <div class="q"><b>Chat platform</b>에서의 personal assistant, single-operator</div>
+        <div class="ar">→</div>
+        <div class="a">openclaw pattern</div>
+      </div>
+      <div class="branch">
+        <div class="q"><b>Self-improving</b> agent + training environment</div>
+        <div class="ar">→</div>
+        <div class="a">hermes-agent pattern</div>
+      </div>
+    </div>
+
+    <div class="spacer" style="flex:0.3"></div>
+
+    <p class="body annotation" style="color:var(--muted);font-family:var(--font-serif);font-style:italic;text-align:center;">
+      옳은 질문은 &mdash; 내가 어떤 문제 class에 있는가? 그 답이 pattern을 고른다.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 28 · Table stakes ══════════════════════════ -->
+  <section data-label="28 Table stakes">
+    <div class="eyebrow">2026에 agent를 만든다면 &mdash; 이것이 floor</div>
+    <h2 class="title">10가지 table stakes.</h2>
+
+    <div class="spacer" style="flex:0.3"></div>
+
+    <div style="display:grid;grid-template-columns:repeat(2, 1fr);column-gap:80px;row-gap:18px;font-size:calc(28px * var(--scale));">
+      <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+        <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:calc(24px * var(--scale));">01</span>
+        <span>Streaming model + tool loop</span>
+      </div>
+      <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+        <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:calc(24px * var(--scale));">02</span>
+        <span>Schema validation 있는 tool registry</span>
+      </div>
+      <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+        <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:calc(24px * var(--scale));">03</span>
+        <span>SKILL.md loader</span>
+      </div>
+      <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+        <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:calc(24px * var(--scale));">04</span>
+        <span>cwd에서 AGENTS.md walk</span>
+      </div>
+      <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+        <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:calc(24px * var(--scale));">05</span>
+        <span>매 turn compaction stage</span>
+      </div>
+      <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+        <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:calc(24px * var(--scale));">06</span>
+        <span>Permissions <em style="color:var(--muted);">또는</em> sandbox</span>
+      </div>
+      <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+        <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:calc(24px * var(--scale));">07</span>
+        <span>MCP support <em style="color:var(--muted);">또는</em> 명시적 refusal</span>
+      </div>
+      <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+        <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:calc(24px * var(--scale));">08</span>
+        <span>ACP server</span>
+      </div>
+      <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+        <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:calc(24px * var(--scale));">09</span>
+        <span>Durable session store</span>
+      </div>
+      <div style="display:grid;grid-template-columns:60px 1fr;align-items:baseline;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line-soft);">
+        <span style="color:var(--accent-1);font-family:var(--font-label);font-variant-numeric:tabular-nums;font-size:calc(24px * var(--scale));">10</span>
+        <span>Subagent affordance</span>
+      </div>
+    </div>
+
+    <div class="spacer" style="flex:0.3"></div>
+
+    <p class="body annotation" style="color:var(--muted);font-family:var(--font-serif);font-style:italic;text-align:center;">
+      어느 것도 invent할 필요 없다. 흥미로운 일은 너의 문제 class에 어떤 pattern이 중요한지 고르고 &mdash; 나머지는 거부하는 것이다.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 29 · Closing ═══════════════════════════════ -->
+  <section data-label="29 Closing" class="hero-slide">
+    <div class="eyebrow h-eyebrow-block">맺음</div>
+    <p class="hero-text">
+      Agents <em>agree</em> more than they disagree.<br />
+      <span style="color:var(--muted);font-style:italic;font-size:0.7em;">남은 rift는 editorial &mdash;</span><br />
+      <span style="color:var(--muted);font-style:italic;font-size:0.7em;">무엇을 거부하고, 무엇을 formalize하고,</span><br />
+      <span style="color:var(--muted);font-style:italic;font-size:0.7em;">trust boundary를 어디에 그을지.</span>
+    </p>
+    <p style="font-family:var(--font-title);font-size:calc(80px * var(--scale));margin-top:60px;color:var(--accent-1);">
+      Pick yours.
+    </p>
+  </section>
+
+  <!-- ═══════════════════════ 30 · Thanks ════════════════════════════════ -->
+  <section data-label="30 Thanks" class="title-slide" style="align-items:center;text-align:center;">
+    <div class="ribbon" style="margin:0 auto 40px;"></div>
+    <h1 style="text-align:center;">감사합니다.</h1>
+    <p class="subtitle" style="text-align:center;margin:0 auto;">질문, 반론, 거부 &mdash; 모두 환영합니다.</p>
+    <div class="meta" style="justify-content:center;">
+      <span>Docs corpus &amp; references &mdash; 요청 시 제공</span>
+    </div>
+  </section>
+
+</deck-stage>
+
+<!-- Tweaks panel mount -->
+<div id="tweaks-root"></div>
+
+<script src="deck-stage.js"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="tweaks.jsx"></script>
+</body>
+</html>
